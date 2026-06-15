@@ -3,16 +3,18 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.ksp)
+    id("com.google.dagger.hilt.android")
 }
 
 android {
     namespace = "com.example.mycoffeeapp"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.mycoffeeapp"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -60,4 +62,28 @@ dependencies {
 
     //Serialization
     implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.coil.compose)
+
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+// Hilt dependency injection
+    implementation("com.google.dagger:hilt-android:2.57.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.57.1")
+
+    //Add extra icons
+//    implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
+//
+//    // for navigation
+//    implementation("androidx.navigation:navigation-compose:2.9.8")
+//
+//    // talking with server
+//    // Retrofit for networking
+//    implementation("com.squareup.retrofit2:retrofit:2.9.0") // Core retrofit library
+//    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+//
+//    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // for viewmodel in compose
+
 }
