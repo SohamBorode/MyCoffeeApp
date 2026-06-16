@@ -1,3 +1,206 @@
+# Cart Screen Fix Reference
+
+This file contains the fixed code for the cart screen redesign and the related compatibility updates.
+
+## 1) `CartItem.kt`
+
+Path:
+`app/src/main/java/com/example/mycoffeeapp/data/model/cart/CartItem.kt`
+
+```kotlin
+package com.example.mycoffeeapp.data.model.cart
+
+data class CartItem(
+    val id: String,
+    val coffeeId: String,
+    val name: String,
+    val imageUrl: String,
+    val price: Double,
+    val size: String,
+    val temperature: String,
+    val quantity: Int = 1,
+    val subtitle: String = ""
+)
+```
+
+## 2) `CartViewModel.kt`
+
+Path:
+`app/src/main/java/com/example/mycoffeeapp/ui/screens/cart/CartViewModel.kt`
+
+```kotlin
+package com.example.mycoffeeapp.ui.screens.cart
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.mycoffeeapp.data.model.CoffeeItem
+import com.example.mycoffeeapp.data.model.cart.CartItem
+import com.example.mycoffeeapp.data.repository.cart.CartRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class CartSummary(
+    val subtotal: Double,
+    val deliveryFee: Double,
+    val total: Double
+)
+
+sealed interface CartUiState {
+    data object Loading : CartUiState
+    data class Success(
+        val cartCoffeeList: List<CartItem>,
+        val summary: CartSummary
+    ) : CartUiState
+    data class Error(val msg: String) : CartUiState
+}
+
+class CartViewModel(
+    private val cartRepository: CartRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<CartUiState>(CartUiState.Loading)
+    val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
+
+    val cartCount: Int
+        get() = (uiState.value as? CartUiState.Success)
+            ?.cartCoffeeList
+            ?.sumOf { it.quantity }
+            ?: 0
+
+    init {
+        loadCartData()
+    }
+
+    fun loadCartData() {
+        viewModelScope.launch {
+            _uiState.value = CartUiState.Loading
+            runCatching {
+                cartRepository.getCartItems()
+            }.onSuccess { items ->
+                _uiState.value = CartUiState.Success(
+                    cartCoffeeList = items,
+                    summary = calculateSummary(items)
+                )
+            }.onFailure { err ->
+                _uiState.value = CartUiState.Error(
+                    err.localizedMessage ?: "Unknown network error"
+                )
+            }
+        }
+    }
+
+    fun addToCart(
+        coffeeItem: CoffeeItem,
+        size: String,
+        temperature: String,
+        finalPrice: Double = coffeeItem.price
+    ) {
+        viewModelScope.launch {
+            runCatching {
+                val currentItems = cartRepository.getCartItems()
+                val existing = currentItems.firstOrNull {
+                    it.coffeeId == coffeeItem.id &&
+                        it.size == size &&
+                        it.temperature == temperature
+                }
+
+                if (existing != null) {
+                    cartRepository.updateCartItem(
+                        existing.copy(
+                            quantity = existing.quantity + 1,
+                            price = finalPrice
+                        )
+                    )
+                } else {
+                    cartRepository.addToCart(
+                        CartItem(
+                            id = java.util.UUID.randomUUID().toString(),
+                            coffeeId = coffeeItem.id,
+                            name = coffeeItem.name,
+                            imageUrl = coffeeItem.imageUrl,
+                            price = finalPrice,
+                            size = size,
+                            temperature = temperature,
+                            quantity = 1
+                        )
+                    )
+                }
+            }.onSuccess {
+                loadCartData()
+            }.onFailure { err ->
+                _uiState.value = CartUiState.Error(
+                    err.localizedMessage ?: "Unable to update cart"
+                )
+            }
+        }
+    }
+
+    fun increaseQuantity(itemId: String) {
+        changeQuantity(itemId, +1)
+    }
+
+    fun decreaseQuantity(itemId: String) {
+        changeQuantity(itemId, -1)
+    }
+
+    fun deleteItem(id: String) {
+        viewModelScope.launch {
+            runCatching {
+                cartRepository.deleteCartItem(id)
+            }.onSuccess {
+                loadCartData()
+            }.onFailure { err ->
+                _uiState.value = CartUiState.Error(
+                    err.localizedMessage ?: "Unable to delete item"
+                )
+            }
+        }
+    }
+
+    private fun changeQuantity(itemId: String, delta: Int) {
+        viewModelScope.launch {
+            runCatching {
+                val currentItems = cartRepository.getCartItems()
+                val target = currentItems.firstOrNull { it.id == itemId } ?: return@runCatching
+
+                val newQuantity = target.quantity + delta
+                if (newQuantity > 0) {
+                    cartRepository.updateCartItem(
+                        target.copy(quantity = newQuantity)
+                    )
+                } else {
+                    cartRepository.deleteCartItem(itemId)
+                }
+            }.onSuccess {
+                loadCartData()
+            }.onFailure { err ->
+                _uiState.value = CartUiState.Error(
+                    err.localizedMessage ?: "Unable to update quantity"
+                )
+            }
+        }
+    }
+
+    private fun calculateSummary(items: List<CartItem>): CartSummary {
+        val subtotal = items.sumOf { it.price * it.quantity }
+        val deliveryFee = if (items.isNotEmpty()) 1.0 else 0.0
+        return CartSummary(
+            subtotal = subtotal,
+            deliveryFee = deliveryFee,
+            total = subtotal + deliveryFee
+        )
+    }
+}
+```
+
+## 3) `CartScreen.kt`
+
+Path:
+`app/src/main/java/com/example/mycoffeeapp/ui/screens/cart/CartScreen.kt`
+
+```kotlin
 package com.example.mycoffeeapp.ui.screens.cart
 
 import androidx.compose.foundation.background
@@ -17,7 +220,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,7 +228,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -129,7 +330,7 @@ fun CartScreen(
                             item {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 PaymentSummaryCard(
-                                    subtotal = state.summary.subTotal,
+                                    subtotal = state.summary.subtotal,
                                     deliveryFee = state.summary.deliveryFee,
                                     total = state.summary.total,
                                     onPlaceOrderClick = {
@@ -248,7 +449,7 @@ fun CartCoffeeItem(
                     modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Delete,
+                        painter = painterResource(R.drawable.regular_outline_trash),
                         contentDescription = "Delete",
                         tint = CafeBrown
                     )
@@ -452,3 +653,44 @@ fun PreviewPaymentCard() {
         onPlaceOrderClick = {}
     )
 }
+```
+
+## 4) `NavBarGraph.kt`
+
+Path:
+`app/src/main/java/com/example/mycoffeeapp/ui/navigation/NavBarGraph.kt`
+
+Replace:
+
+```kotlin
+val cartCount = (cartState as? CartUiState.Success)?.cartCoffeeList?.size ?: 0
+```
+
+With:
+
+```kotlin
+val cartCount = (cartState as? CartUiState.Success)
+    ?.cartCoffeeList
+    ?.sumOf { it.quantity }
+    ?: 0
+```
+
+## 5) `CartRepository.kt`
+
+Path:
+`app/src/main/java/com/example/mycoffeeapp/data/repository/cart/CartRepository.kt`
+
+Add this contract if it does not already exist:
+
+```kotlin
+suspend fun updateCartItem(cartItem: CartItem)
+```
+
+If you use remote/demo data sources, add the same update method there too.
+
+## 6) Notes
+
+- The cart should merge duplicate items by `coffeeId + size + temperature`.
+- Quantity updates must persist through the repository layer.
+- `Place Order` is only a UI action right now; connect it to checkout later.
+- The badge count should represent total quantity, not number of rows.

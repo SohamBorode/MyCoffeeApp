@@ -17,4 +17,6 @@ interface CartApiService{
 
     @DELETE("/cart/delete/{cartItemId}")
     suspend fun deleteFromCart(@Path("cartItemId") cartItemId : String)
+    @POST("/cart/cartItem/update")
+    suspend fun updateCartItem(cartItem: CartItem)
 }

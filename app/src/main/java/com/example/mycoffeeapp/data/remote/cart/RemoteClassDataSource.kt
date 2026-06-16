@@ -8,11 +8,11 @@ class RemoteClassDataSource(private val api : CartApiService) : CartDataSource {
     }
 
     override suspend fun addToCart(cartItem: CartItem) {
-        TODO("Not yet implemented")
+        api.addToCart(cartItem)
     }
 
     override suspend fun updateCartItem(cartItem: CartItem) {
-        TODO("Not yet implemented")
+        api.updateCartItem(cartItem)
     }
 
     override suspend fun removeFromCart(cartItemId: String) {

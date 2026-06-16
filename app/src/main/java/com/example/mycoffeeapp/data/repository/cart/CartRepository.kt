@@ -39,4 +39,30 @@ class CartRepository(
             demo.removeFromCart(cartItemId)
         }
     }
+
+    suspend fun addToCart(cartItem: CartItem) {
+        if (Constants.USE_BACKEND) {
+            try {
+                remote.addToCart(cartItem)
+            } catch (e: Exception) {
+                demo.addToCart(cartItem)
+            }
+        } else {
+            demo.addToCart(cartItem)
+        }
+    }
+
+    suspend fun updateCartItem(cartItem: CartItem) {
+        if (Constants.USE_BACKEND){
+            try {
+                remote.updateCartItem(cartItem)
+            }catch (e : Exception){
+                demo.updateCartItem(cartItem)
+            }
+        }else{
+            demo.updateCartItem(cartItem)
+        }
+    }
+
+
 }

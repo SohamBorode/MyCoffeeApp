@@ -56,7 +56,7 @@ class DemoCartDataSource : CartDataSource {
     }
 
     override suspend fun addToCart(cartItem: CartItem) {
-        TODO("Not yet implemented")
+        demoItems.add(cartItem)
     }
 
     override suspend fun updateCartItem(cartItem: CartItem) {

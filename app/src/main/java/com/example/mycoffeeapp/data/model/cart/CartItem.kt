@@ -8,5 +8,6 @@ data class CartItem(
     val price: Double,
     val size: String,        // e.g., "S", "M", "L"
     val temperature: String, // e.g., "Hot", "Iced"
-    val quantity: Int = 1
+    val quantity: Int = 1,
+    val subtitle : String = ""
 )

@@ -13,7 +13,7 @@ val Pink40 = Color(0xFF7D5260)
 val Orange = Color(0xFFFFA500)
 
 val Black = Color(0xFF000000)
-val Gray = Color(0xFF808080)
+val Gray = Color(0xFFAEADAD)
 val LightGray = Color(0xFFD3D3D3)
 val CoffeeBrown = Color(0xFF6F4E37)// --- BROWNS (Espresso to Latte) ---
 val DeepEspresso = Color(0xFF2D1B0D)

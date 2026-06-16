@@ -37,6 +37,8 @@ import com.example.mycoffeeapp.ui.navigation.NavBarRoutes
 fun LazyColumnHS(
     navController: NavHostController,
     coffeeItemList: List<CoffeeItem>,
+    onFavoriteClick: (String) -> Unit = {},
+    onAddClick: (CoffeeItem) -> Unit = {},
     header: @Composable () -> Unit = {},
     stickyHeader: @Composable () -> Unit = {},
     banner: @Composable () -> Unit = {}
@@ -103,7 +105,7 @@ fun LazyColumnHS(
                 for (item in rowItems) {
                     CoffeeCard(
                         item = item,
-                        onAddClick = {},
+                        onAddClick = { onAddClick(item) },
                         onCardClick = {
                             navController.navigate(
                                 NavBarRoutes.CoffeeDetailsScreen(
@@ -111,7 +113,7 @@ fun LazyColumnHS(
                                 )
                             )
                         },
-                        onFavoriteClick = {},
+                        onFavoriteClick = { onFavoriteClick(item.id) },
                         modifier = Modifier.weight(1f)
                     )
                 }

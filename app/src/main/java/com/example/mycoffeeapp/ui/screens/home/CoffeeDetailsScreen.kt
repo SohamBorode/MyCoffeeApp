@@ -46,8 +46,8 @@ enum class CoffeeTemperature(val priceAdjustment: Double) {
 
 data class CoffeeDetailState(
     val coffeeItem: CoffeeItem,
-    val selectedSize: CoffeeSize = CoffeeSize.M,
-    val selectedTemperature: CoffeeTemperature = CoffeeTemperature.Hot,
+    val selectedSize: CoffeeSize = CoffeeSize.valueOf(coffeeItem.size),
+    val selectedTemperature: CoffeeTemperature = CoffeeTemperature.valueOf(coffeeItem.temperature),
     val quantity: Int = 1
 ) {
     // Logic to calculate price based on size and temperature

@@ -22,31 +22,38 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.data.model.CoffeeCategory
+import com.example.mycoffeeapp.data.model.CoffeeItem
 import com.example.mycoffeeapp.ui.components.LazyColumnHS
-import com.example.mycoffeeapp.ui.components.SearchBar
 import com.example.mycoffeeapp.ui.components.ReusableFilterBar
+import com.example.mycoffeeapp.ui.components.SearchBar
 import com.example.mycoffeeapp.ui.components.fadingEdges
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
 import kotlinx.coroutines.delay
 
 @Composable
-fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel) {
+fun HomeScreen(
+    navController: NavHostController,
+    viewModel: HomeViewModel,
+    cartCount : Int,
+    onAddToCartClick : (CoffeeItem) -> Unit
+) {
     val categories = listOf(
         CoffeeCategory("1", "All Coffee"),
-        CoffeeCategory("2", "Machination"),
+        CoffeeCategory("2", "Cappuccino"),
         CoffeeCategory("3", "Latte"),
-        CoffeeCategory("4", "Cappuccino"),
+        CoffeeCategory("4", "Americano"),
         CoffeeCategory("5", "Espresso"),
-        CoffeeCategory("6", "Americano"),
-        CoffeeCategory("7", "Flat White"),
-        CoffeeCategory("8", "Mocha"),
-        CoffeeCategory("9", "Cold Brew")
+        CoffeeCategory("6", "Macchiato"),
+        CoffeeCategory("7", "Mocha"),
+        CoffeeCategory("8", "Flat White")
     )
-    val selectedCategory = remember { mutableStateOf(categories[0]) }
+    val selectedCategoryId by viewModel.selectedCategoryId.collectAsState()
+    val selectedCategory = categories.find { it.id == selectedCategoryId } ?: categories[0]
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val state by viewModel.uiState.collectAsState()
 
     Scaffold(
-        bottomBar = { NavBarDesign(navController, "HomeScreen") }
+        bottomBar = { NavBarDesign(navController, "HomeScreen", cartCount) }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -80,16 +87,22 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel) {
                     LazyColumnHS(
                         navController = navController,
                         coffeeItemList = uiState.coffeeList,
+                        onFavoriteClick = { viewModel.toggleFavorite(it) },
+                        onAddClick = {onAddToCartClick(it)},
                         header = {
                             LocationHeader()
                         },
                         stickyHeader = {
                             Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                                SearchBar()
+                                SearchBar(
+                                    value = searchQuery,
+                                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                                    onSearchClick = { viewModel.onSearchQueryChange(it) }
+                                )
                                 ReusableFilterBar(
                                     filters = categories,
-                                    selectedFilter = selectedCategory.value,
-                                    onFilterSelected = { selectedCategory.value = it }
+                                    selectedFilter = selectedCategory,
+                                    onFilterSelected = { viewModel.filterByItem(it.id) }
                                 )
                             }
                         },
