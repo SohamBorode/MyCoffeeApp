@@ -60,7 +60,10 @@ class DemoCartDataSource : CartDataSource {
     }
 
     override suspend fun updateCartItem(cartItem: CartItem) {
-        TODO("Not yet implemented")
+        val index = demoItems.indexOfFirst { it.id == cartItem.id }
+        if (index!=-1){
+            demoItems[index] = cartItem
+        }
     }
 
     override suspend fun removeFromCart(cartItemId: String) {

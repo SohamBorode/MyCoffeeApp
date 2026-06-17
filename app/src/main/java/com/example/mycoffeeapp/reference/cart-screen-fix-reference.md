@@ -694,3 +694,171 @@ If you use remote/demo data sources, add the same update method there too.
 - Quantity updates must persist through the repository layer.
 - `Place Order` is only a UI action right now; connect it to checkout later.
 - The badge count should represent total quantity, not number of rows.
+
+
+```kotlin
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+// 1. Define your payment options data model
+data class PaymentMethod(val id: String, val name: String, val iconRes: Int?)
+
+@Composable
+fun PaymentSelectorCard() {
+// UI Theme Colors (Matching your dark mode image)
+val cardBackground = Color(0xFF1E1E1E) // Exact dark gray from your block
+val accentOrange = Color(0xFFFF6B00)  // Matching your "Place Order" color
+val textWhite = Color(0xFFFFFFFF)
+val textMuted = Color(0xFF8E8E93)
+val dividerColor = Color(0xFF2C2C2E)
+
+// State management  
+    var showPaymentOptions by remember { mutableStateOf(false) }
+
+    val paymentOptions = remember {
+        listOf(
+            PaymentMethod("netBanking", "Net Banking", R.drawable.net_banking),
+            PaymentMethod("card", "Credit / Debit Card", R.drawable.debit_card), // Replace null with your R.drawable.ic_card
+            PaymentMethod("upi", "Upi Payment",R.drawable.upi),
+            PaymentMethod("digiWallet", "Digital Wallet", R.drawable.digital_wallet),
+            PaymentMethod("crypto", "Cryptocurrency", R.drawable.crypto),
+            PaymentMethod("cashOnDelivery", "Cash On Delivery", R.drawable.cash_on_delivery),
+            PaymentMethod("prepaid", "Prepaid / Gift Card", R.drawable.gift_card),
+            PaymentMethod("bnpl", "Buy Now Pay Later", R.drawable.pay_later)
+        )
+    }
+    var selectedPaymentMode by remember { mutableStateOf (paymentOptions[0])}
+    val arrowRotationAngle by animateFloatAsState(
+        targetValue = if (showPaymentOptions) 180f else 0f,
+        label = "ArrowRotation"
+    )
+
+// Main parent container box  
+Card(  
+    modifier = Modifier  
+        .fillMaxWidth()  
+        .padding(16.dp),  
+    shape = RoundedCornerShape(12.dp),  
+    colors = CardDefaults.cardColors(containerColor = cardBackground)  
+) {  
+    Column(modifier = Modifier.fillMaxWidth()) {  
+          
+        // Header Header Row: Displays current selection & contains toggle target  
+        Row(  
+            modifier = Modifier  
+                .fillMaxWidth()  
+                .clickable { isExpanded = !isExpanded } // Toggles expansion anywhere on row  
+                .padding(horizontal = 16.dp, vertical = 20.dp),  
+            verticalAlignment = Alignment.CenterVertically,  
+            horizontalArrangement = Arrangement.SpaceBetween  
+        ) {  
+            Column {  
+                Text(  
+                    text = "Payment Method",  
+                    color = textMuted,  
+                    fontSize = 12.sp,  
+                    fontWeight = FontWeight.Medium  
+                )  
+                Spacer(modifier = Modifier.height(4.dp))  
+                Text(  
+                    text = selectedMethod.name,  
+                    color = if (selectedMethod.id == "online") accentOrange else textWhite,  
+                    fontSize = 16.sp,  
+                    fontWeight = FontWeight.Bold  
+                )  
+            }  
+
+            // Smoothly animated arrow vector  
+            Icon(  
+                imageVector = Icons.Default.KeyboardArrowDown,  
+                contentDescription = "Toggle Payment Options",  
+                tint = textWhite,  
+                modifier = Modifier  
+                    .size(24.dp)  
+                    .rotate(arrowRotationAngle)  
+            )  
+        }  
+
+        // 2. Animated Slide-Down Dropdown Menu Extension  
+        AnimatedVisibility(  
+            visible = isExpanded,  
+            enter = expandVertically() + fadeIn(),  
+            exit = shrinkVertically() + fadeOut()  
+        ) {  
+            Column(modifier = Modifier.fillMaxWidth()) {  
+                paymentOptions.forEach { method ->  
+                    // Skip rendering the currently active option in the sub-list if desired,   
+                    // or keep it to show full configuration options.  
+                      
+                    HorizontalDivider(color = dividerColor, thickness = 1.dp)  
+
+                    Row(  
+                        modifier = Modifier  
+                            .fillMaxWidth()  
+                            .clickable {  
+                                selectedMethod = method  
+                                isExpanded = false // Closes cleanly on choice selection  
+                            }  
+                            .padding(horizontal = 16.dp, vertical = 16.dp),  
+                        verticalAlignment = Alignment.CenterVertically,  
+                        horizontalArrangement = Arrangement.SpaceBetween  
+                    ) {  
+                        Row(verticalAlignment = Alignment.CenterVertically) {  
+                            // Dynamic placeholder logic for your payment icon assets  
+                            if (method.iconRes != null) {  
+                                Icon(  
+                                    painter = painterResource(id = method.iconRes),  
+                                    contentDescription = null,  
+                                    tint = textWhite,  
+                                    modifier = Modifier.size(24.dp).padding(end = 12.dp)  
+                                )  
+                            }  
+                            Text(  
+                                text = method.name,  
+                                color = textWhite,  
+                                fontSize = 15.sp,  
+                                fontWeight = FontWeight.Normal  
+                            )  
+                        }  
+
+                        // Selection state indicator circle  
+                        RadioButton(  
+                            selected = (method.id == selectedMethod.id),  
+                            onClick = {  
+                                selectedMethod = method  
+                                isExpanded = false  
+                            },  
+                            colors = RadioButtonDefaults.colors(  
+                                selectedColor = accentOrange,  
+                                unselectedColor = textMuted  
+                            )  
+                        )  
+                    }  
+                }  
+            }  
+        }  
+    }  
+}
+
+}
+```
