@@ -86,4 +86,7 @@ dependencies {
 //
 //    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // for viewmodel in compose
 
+
+    // location/co-ordinate
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }

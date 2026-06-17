@@ -402,45 +402,42 @@ fun PaymentSummaryCard(
                             modifier = Modifier.size(18.dp)
                         )
                     }
-                    // Aniamtion expanindng
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = expandVertically(animationSpec = tween(250)) + fadeIn(
-                            animationSpec = tween(
-                                250
-                            )
-                        ) + slideInVertically(
-                            animationSpec = tween(250),
-                            initialOffsetY = { it / 2 }),
-                        exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(
-                            animationSpec = tween(
-                                150
-                            )
-                        ) + slideOutVertically(
-                            animationSpec = tween(
-                                200
-                            ), targetOffsetY = { it / 2 }),
+                }
+                AnimatedVisibility(
+                    visible = expand,
+                    enter = expandVertically(animationSpec = tween(250)) + fadeIn(
+                        animationSpec = tween(
+                            250
+                        )
+                    ) + slideInVertically(
+                        animationSpec = tween(250),
+                        initialOffsetY = { it / 2 }),
+                    exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(
+                        animationSpec = tween(
+                            150
+                        )
+                    ) + slideOutVertically(
+                        animationSpec = tween(
+                            200
+                        ), targetOffsetY = { it / 2 }),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            paymentMethods.forEachIndexed { index, method ->
-                                if (index != 0) {
-                                    HorizontalDivider(
-                                        color = LightGray, thickness = 1.dp
-                                    )
-                                }
-                                PaymentOptionRow(
-                                    method = method,
-                                    selected = (method.id == selectedPaymentMethod.id),
-                                    onClick = { onPaymentSelected(method) }
+                        paymentMethods.forEachIndexed { index, method ->
+                            if (index != 0) {
+                                HorizontalDivider(
+                                    color = LightGray, thickness = 1.dp
                                 )
                             }
+                            PaymentOptionRow(
+                                method = method,
+                                selected = (method.id == selectedPaymentMethod.id),
+                                onClick = { onPaymentSelected(method) }
+                            )
                         }
                     }
-
-
                 }
             }
 
@@ -479,7 +476,7 @@ fun PaymentOptionRow(selected: Boolean, method: PaymentMethod, onClick: () -> Un
         Icon(
             painter = painterResource(method.iconRes),
             contentDescription = method.title,
-            tint = CafeBrown,
+//            tint = CafeBrown,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(10.dp))
