@@ -18,12 +18,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mycoffeeapp.data.remote.RetrofitClient
 import com.example.mycoffeeapp.data.remote.cart.DemoCartDataSource
 import com.example.mycoffeeapp.data.remote.cart.RemoteClassDataSource
+import com.example.mycoffeeapp.data.remote.favorite.DemoFavoriteDataSource
+import com.example.mycoffeeapp.data.remote.favorite.RemoteFavoriteDataSource
+import com.example.mycoffeeapp.data.remote.profile.DemoProfileDataSource
+import com.example.mycoffeeapp.data.remote.profile.RemoteProfileDataSource
 import com.example.mycoffeeapp.data.repository.CoffeeRepository
 import com.example.mycoffeeapp.data.repository.cart.CartRepository
 import com.example.mycoffeeapp.data.repository.coffeeItemList
+import com.example.mycoffeeapp.data.repository.favorite.FavoriteRepository
+import com.example.mycoffeeapp.data.repository.profile.ProfileRepository
 import com.example.mycoffeeapp.ui.screens.cart.CartScreen
 import com.example.mycoffeeapp.ui.screens.cart.CartViewModel
 import com.example.mycoffeeapp.ui.screens.cart.CartUiState
+import com.example.mycoffeeapp.ui.screens.favorite.FavoriteViewModel
 import com.example.mycoffeeapp.ui.screens.favorite.HeartScreen
 import com.example.mycoffeeapp.ui.screens.home.CoffeeDetailState
 import com.example.mycoffeeapp.ui.screens.home.CoffeeDetailsScreen
@@ -31,29 +38,46 @@ import com.example.mycoffeeapp.ui.screens.home.HomeScreen
 import com.example.mycoffeeapp.ui.screens.home.HomeUiState
 import com.example.mycoffeeapp.ui.screens.home.HomeViewModel
 import com.example.mycoffeeapp.ui.screens.profile.ProfileScreen
+import com.example.mycoffeeapp.ui.screens.profile.ProfileViewModel
 
 @Composable
 fun NavBarGraph(navControllerX: NavHostController) {
     val navBarController = rememberNavController()
-
     val apiService = RetrofitClient.apiService
-    val repository = remember { CoffeeRepository(apiService) }
-    val homeViewModel = remember { HomeViewModel(repository) }
-
+    val homeRepository = remember { CoffeeRepository(apiService) }
+    val favoriteRepository = remember {
+        FavoriteRepository(
+            remote = RemoteFavoriteDataSource(RetrofitClient.favoriteApiService),
+            demo = DemoFavoriteDataSource()
+        )
+    }
+    val homeViewModel = remember { HomeViewModel(homeRepository, favoriteRepository) }
+    val favoriteViewModel = remember { FavoriteViewModel(homeRepository, favoriteRepository) }
     val cartRepository = remember {
         CartRepository(
             remote = RemoteClassDataSource(RetrofitClient.cartRemoteApiService),
             demo = DemoCartDataSource()
         )
     }
-    val cartViewModel = remember { CartViewModel(cartRepository) }
 
+
+    val cartViewModel = remember { CartViewModel(cartRepository) }
     val cartState by cartViewModel.uiState.collectAsState()
     val cartCount = (cartState as? CartUiState.Success)
         ?.cartCoffeeList
         ?.sumOf { it.quantity }
         ?: 0
 
+
+    // profile page
+
+    val profileRepository = remember {
+        ProfileRepository(
+            remote = RemoteProfileDataSource(RetrofitClient.profileApiService),
+            demo = DemoProfileDataSource()
+        )
+    }
+    val profileViewModel = remember { ProfileViewModel(profileRepository) }
 
     NavHost(
         navController = navBarController,
@@ -82,7 +106,8 @@ fun NavBarGraph(navControllerX: NavHostController) {
            */
             HomeScreen(
                 navController = navBarController,
-                viewModel = homeViewModel,
+                homeViewModel = homeViewModel,
+                favoriteViewModel = favoriteViewModel,
                 cartCount = cartCount,
                 onAddToCartClick = { coffeeItem ->
                     cartViewModel.addToCart(
@@ -124,11 +149,25 @@ fun NavBarGraph(navControllerX: NavHostController) {
         }
 
         composable<NavBarRoutes.HeartScreen> {
-            HeartScreen(navController = navBarController)
+            HeartScreen(
+                navController = navBarController,
+                viewModel = favoriteViewModel,
+                onAddToCartClick = { coffeeItem ->
+                    cartViewModel.addToCart(
+                        coffeeItem = coffeeItem,
+                        temperature = coffeeItem.temperature,
+                        size = coffeeItem.size,
+                        finalPrice = coffeeItem.price
+                    )
+                }
+            )
         }
 
         composable<NavBarRoutes.ProfileScreen> {
-            ProfileScreen(navController = navBarController)
+            ProfileScreen(
+                navController = navBarController,
+                viewModel = profileViewModel
+            )
         }
 
         composable<NavBarRoutes.CoffeeDetailsScreen> { backStackEntry ->

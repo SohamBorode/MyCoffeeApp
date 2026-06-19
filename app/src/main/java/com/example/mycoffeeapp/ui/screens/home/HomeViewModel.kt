@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mycoffeeapp.data.model.CoffeeItem
 import com.example.mycoffeeapp.data.mapper.toDomainModel
 import com.example.mycoffeeapp.data.repository.CoffeeRepository
+import com.example.mycoffeeapp.data.repository.favorite.FavoriteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +19,10 @@ sealed interface HomeUiState {
     data class Error(val msg: String) : HomeUiState
 }
 
-class HomeViewModel(private val repository: CoffeeRepository) : ViewModel() {
+class HomeViewModel(
+    private val repository: CoffeeRepository,
+    private val favoriteRepository: FavoriteRepository
+) : ViewModel() {
     private val _allCoffeeList = MutableStateFlow<List<CoffeeItem>>(emptyList())
     private val _searchResultList = MutableStateFlow<List<CoffeeItem>?>(null)
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -90,6 +94,8 @@ class HomeViewModel(private val repository: CoffeeRepository) : ViewModel() {
     }
 
     private fun applyVisibleList() {
+        val favoriteIds = favoriteRepository.favoriteIds.value
+
         val baseList = if (_searchQuery.value.isBlank()) {
             _allCoffeeList.value
         } else {
@@ -102,10 +108,22 @@ class HomeViewModel(private val repository: CoffeeRepository) : ViewModel() {
             baseList.filter { it.categoryId == _selectedCategoryId.value }
         }
 
-        _uiState.value = HomeUiState.Success(filtered)
+        _uiState.value = HomeUiState.Success(
+            filtered.map { it.copy(isFavorite = it.id in favoriteIds) }
+        )
     }
 
+
     fun toggleFavorite(itemId: String) {
+        viewModelScope.launch {
+            favoriteRepository.toggleFavorite(itemId)
+            applyVisibleList()
+        }
+    }
+
+    /*
+    fun toggleFavorite(itemId: String) {
+
         _allCoffeeList.value = _allCoffeeList.value.map {
             if (it.id == itemId) it.copy(isFavorite = !it.isFavorite) else it
         }
@@ -116,4 +134,6 @@ class HomeViewModel(private val repository: CoffeeRepository) : ViewModel() {
 
         applyVisibleList()
     }
+    */
+
 }

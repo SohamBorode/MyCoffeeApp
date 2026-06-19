@@ -3,7 +3,7 @@ package com.example.mycoffeeapp.data.mapper
 import com.example.mycoffeeapp.data.model.CoffeeItem
 import com.example.mycoffeeapp.data.model.dto.CoffeeItemDto
 
-fun CoffeeItemDto.toDomainModel(): CoffeeItem {
+fun CoffeeItemDto.toDomainModel(isFavorite: Boolean = false): CoffeeItem {
     return CoffeeItem(
         id = this.id,
         categoryId = this.categoryId,
@@ -13,6 +13,6 @@ fun CoffeeItemDto.toDomainModel(): CoffeeItem {
         imageUrl = this.imageUrl,
         rating = this.rating,
         reviewCount = this.reviewCount,
-        isFavorite = false
+        isFavorite = isFavorite
     )
 }

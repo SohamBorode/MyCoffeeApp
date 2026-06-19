@@ -38,6 +38,7 @@ import com.example.mycoffeeapp.ui.components.ReusableFilterBar
 import com.example.mycoffeeapp.ui.components.SearchBar
 import com.example.mycoffeeapp.ui.components.fadingEdges
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
+import com.example.mycoffeeapp.ui.screens.favorite.FavoriteViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -47,7 +48,8 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    viewModel: HomeViewModel,
+    homeViewModel: HomeViewModel,
+    favoriteViewModel : FavoriteViewModel,
     cartCount : Int,
     onAddToCartClick : (CoffeeItem) -> Unit
 ) {
@@ -61,10 +63,10 @@ fun HomeScreen(
         CoffeeCategory("7", "Mocha"),
         CoffeeCategory("8", "Flat White")
     )
-    val selectedCategoryId by viewModel.selectedCategoryId.collectAsState()
+    val selectedCategoryId by homeViewModel.selectedCategoryId.collectAsState()
     val selectedCategory = categories.find { it.id == selectedCategoryId } ?: categories[0]
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val state by viewModel.uiState.collectAsState()
+    val searchQuery by homeViewModel.searchQuery.collectAsState()
+    val state by homeViewModel.uiState.collectAsState()
 
     Scaffold(
         bottomBar = { NavBarDesign(navController, "HomeScreen", cartCount) }
@@ -91,7 +93,7 @@ fun HomeScreen(
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = uiState.msg, color = Color.Red)
-                            Button(onClick = { viewModel.loadCoffeeData() }) {
+                            Button(onClick = { homeViewModel.loadCoffeeData() }) {
                                 Text("Retry")
                             }
                         }
@@ -101,7 +103,7 @@ fun HomeScreen(
                     LazyColumnHS(
                         navController = navController,
                         coffeeItemList = uiState.coffeeList,
-                        onFavoriteClick = { viewModel.toggleFavorite(it) },
+                        onFavoriteClick = { favoriteViewModel.toggleFavorite(it) },
                         onAddClick = {onAddToCartClick(it)},
                         header = {
                             LocationHeader()
@@ -110,13 +112,13 @@ fun HomeScreen(
                             Column(modifier = Modifier.padding(bottom = 8.dp)) {
                                 SearchBar(
                                     value = searchQuery,
-                                    onValueChange = { viewModel.onSearchQueryChange(it) },
-                                    onSearchClick = { viewModel.onSearchQueryChange(it) }
+                                    onValueChange = { homeViewModel.onSearchQueryChange(it) },
+                                    onSearchClick = { homeViewModel.onSearchQueryChange(it) }
                                 )
                                 ReusableFilterBar(
                                     filters = categories,
                                     selectedFilter = selectedCategory,
-                                    onFilterSelected = { viewModel.filterByItem(it.id) }
+                                    onFilterSelected = { homeViewModel.filterByItem(it.id) }
                                 )
                             }
                         },
@@ -338,10 +340,6 @@ fun LocationHeader() {
         }
     }
 }
-
-
-
-
 
 @SuppressLint("MissingPermission")
 private fun fetchCurrentCity(

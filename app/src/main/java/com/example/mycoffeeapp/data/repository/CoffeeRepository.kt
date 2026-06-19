@@ -4,6 +4,9 @@ import androidx.compose.ui.unit.Constraints
 import com.example.mycoffeeapp.constants.Constants
 import com.example.mycoffeeapp.data.model.dto.CoffeeItemDto
 import com.example.mycoffeeapp.data.remote.CoffeeApiService
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class CoffeeRepository(private val apiService: CoffeeApiService){
     suspend fun fetchAllCoffees() : Result<List<CoffeeItemDto>> {
@@ -93,4 +96,18 @@ class CoffeeRepository(private val apiService: CoffeeApiService){
             )
         }
     }
+
+
+    private val _favoriteIds = MutableStateFlow<Set<String>>(emptySet())
+    val favoriteIds: StateFlow<Set<String>> = _favoriteIds.asStateFlow()
+
+    fun toggleFavorite(itemId: String) {
+        val current = _favoriteIds.value
+        if (current.contains(itemId)) {
+            _favoriteIds.value = current - itemId // Delete
+        } else {
+            _favoriteIds.value = current + itemId // Add
+        }
+    }
+
 }
