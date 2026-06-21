@@ -25,6 +25,8 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -32,6 +34,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,12 +48,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
 import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
 import com.example.mycoffeeapp.ui.theme.CafeTextGray
+import com.example.mycoffeeapp.ui.theme.OffWhite
 import com.example.mycoffeeapp.ui.theme.PureWhite
+import org.jetbrains.annotations.Async
 
 @Composable
 fun ProfileScreen(
@@ -57,7 +65,7 @@ fun ProfileScreen(
 ) {
 
     val state by viewModel.uiState.collectAsState()
-
+    var showImageMenu by remember { mutableStateOf(false) }
     Scaffold(
         containerColor = CafeCream,
         bottomBar = { NavBarDesign(navController, "ProfileScreen") }
@@ -140,8 +148,8 @@ fun ProfileScreen(
                             contentAlignment = Alignment.BottomEnd
                         ) {
                             // Main Profile Image with shadow and border to soften the edges
-                            Image(
-                                painter = painterResource(profileState.profileImg),
+                            AsyncImage(
+                                model = profileState.profileImageUri,
                                 contentDescription = "Profile Picture",
                                 modifier = Modifier
                                     .size(130.dp)
@@ -159,7 +167,9 @@ fun ProfileScreen(
                                     .background(PureWhite, CircleShape)
                                     .border(1.dp, Color.LightGray.copy(alpha = 0.4f), CircleShape)
                                     .clip(CircleShape)
-                                    .clickable { },
+                                    .clickable {
+                                        showImageMenu = true
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -168,6 +178,33 @@ fun ProfileScreen(
                                     modifier = Modifier.size(20.dp),
                                     tint = CafeTextDark
                                 )
+                                DropdownMenu(
+                                    expanded = showImageMenu,
+                                    onDismissRequest = { showImageMenu = false },
+                                    Modifier.background(color = OffWhite)
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Camera") },
+                                        onClick = {
+                                            showImageMenu = false
+                                            // launch camera
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Gallery") },
+                                        onClick = {
+                                            showImageMenu = false
+                                            // launch gallery
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Remove") },
+                                        onClick = {
+                                            showImageMenu = false
+                                            viewModel.removeProfileImage()
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
