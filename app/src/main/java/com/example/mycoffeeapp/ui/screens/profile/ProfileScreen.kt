@@ -1,7 +1,8 @@
 package com.example.mycoffeeapp.ui.screens.profile
 
 
-import androidx.compose.foundation.Image
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,29 +45,49 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
+import com.example.mycoffeeapp.ui.navigation.NavBarRoutes
 import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
 import com.example.mycoffeeapp.ui.theme.CafeTextGray
 import com.example.mycoffeeapp.ui.theme.OffWhite
 import com.example.mycoffeeapp.ui.theme.PureWhite
-import org.jetbrains.annotations.Async
+import android.Manifest
+import android.content.pm.PackageManager
 
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
     viewModel: ProfileViewModel
 ) {
-
     val state by viewModel.uiState.collectAsState()
     var showImageMenu by remember { mutableStateOf(false) }
+
+
+    /// camera
+    val context = LocalContext.current
+
+    // Add the permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Navigate to camera if permission is granted after request
+            navController.navigate(NavBarRoutes.CameraPreview)
+        } else {
+            // Optionally handle permission denial (e.g., show a Toast)
+        }
+    }
+
     Scaffold(
         containerColor = CafeCream,
         bottomBar = { NavBarDesign(navController, "ProfileScreen") }
@@ -151,12 +173,14 @@ fun ProfileScreen(
                             AsyncImage(
                                 model = profileState.profileImageUri,
                                 contentDescription = "Profile Picture",
+                                placeholder = painterResource(profileState.defaultProfileImage),
+                                error = painterResource(profileState.defaultProfileImage),
                                 modifier = Modifier
                                     .size(130.dp)
                                     .shadow(elevation = 6.dp, shape = CircleShape)
                                     .border(4.dp, PureWhite, CircleShape)
                                     .clip(CircleShape)
-                                    .clickable{/*On click the image opens the image window*/},
+                                    .clickable {/*On click the image opens the image window*/ },
                                 contentScale = ContentScale.Crop
                             )
 
@@ -180,15 +204,28 @@ fun ProfileScreen(
                                 )
                                 DropdownMenu(
                                     expanded = showImageMenu,
-                                    onDismissRequest = { showImageMenu = false },
+                                    onDismissRequest = {
+                                        showImageMenu = false
+                                    },
                                     Modifier.background(color = OffWhite)
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Camera") },
                                         onClick = {
                                             showImageMenu = false
-                                            // launch camera
-                                        }
+                                            val permissionCheckResult =
+                                                ContextCompat.checkSelfPermission(
+                                                context,
+                                                Manifest.permission.CAMERA
+                                            )
+
+                                            if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                                                // Already have permission, navigate immediately
+                                                navController.navigate(NavBarRoutes.CameraPreview)
+                                            } else {
+                                                // Request permission
+                                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                            }                                        }
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Gallery") },

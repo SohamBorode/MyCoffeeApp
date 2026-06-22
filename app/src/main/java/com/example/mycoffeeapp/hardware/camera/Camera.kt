@@ -1,6 +1,7 @@
 package com.example.mycoffeeapp.hardware.camera
 
 import android.content.Context
+import android.net.Uri
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -9,7 +10,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,11 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,30 +36,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.view.allViews
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.NavHostController
+import com.example.mycoffeeapp.R
+import com.example.mycoffeeapp.ui.screens.profile.ProfileViewModel
+import com.example.mycoffeeapp.ui.theme.OffWhite
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import java.util.Locale
-import java.text.SimpleDateFormat
 
 @Composable
-fun CameraPreview(
-//    modifier: Modifier = Modifier,
-) {
+fun CameraPreview(navBarController: NavHostController,viewModel: ProfileViewModel) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-
-    var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    var cameraSelector by remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
 
     val previewView = remember { PreviewView(context) }
     val preview = remember { Preview.Builder().build() }
     val imageCapture = remember { ImageCapture.Builder().build() }
     var camera by remember { mutableStateOf<Camera?>(null) }
-
-    var zoomLevel by remember { mutableFloatStateOf(1f) }
 
 
     LaunchedEffect(cameraSelector) {
@@ -79,8 +78,21 @@ fun CameraPreview(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.Black)
+            .background(color = OffWhite)
     ) {
+        Button(
+            onClick = { navBarController.popBackStack() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 40.dp, start = 16.dp)
+        ) {
+            Icon(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.regular_outline_arrow_left),
+                contentDescription = "Back"
+            )
+            Text(text = "Back")
+        }
+        
         AndroidView(
             factory = { previewView },
             modifier = Modifier
@@ -97,11 +109,18 @@ fun CameraPreview(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter)
+                .align(Alignment.BottomCenter),
+            horizontalArrangement = Arrangement.Center
         ) {
 
             Button(
-                onClick = { takePhoto(imageCapture, context) },
+                onClick = {
+                    takePhoto(imageCapture, context) { uri ->
+                        println("Saved Uri: $uri")
+                        viewModel.onProfileImageSelected(uri.toString())
+                        navBarController.popBackStack()
+                    }
+                },
                 modifier = Modifier
                     .padding(bottom = 50.dp)
             ) {
@@ -110,13 +129,17 @@ fun CameraPreview(
             Spacer(modifier = Modifier.width(10.dp))
             Button(
                 onClick = {
-                    cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-                    takePhoto(imageCapture, context)
+                    cameraSelector =
+                        if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                            CameraSelector.DEFAULT_FRONT_CAMERA
+                        } else {
+                            CameraSelector.DEFAULT_BACK_CAMERA
+                        }
                 },
                 modifier = Modifier
                     .padding(bottom = 50.dp)
             ) {
-                Text(text = "TakeSelfie")
+                Text(text = "Switch Camera")
             }
         }
     }
@@ -136,7 +159,8 @@ private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
 
 private fun takePhoto(
     imageCapture: ImageCapture,
-    context: Context
+    context: Context,
+    onImageCaptured: (Uri) -> Unit
 ) {
     val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
         .format(System.currentTimeMillis())
@@ -152,7 +176,9 @@ private fun takePhoto(
         object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                 // SUCCESS: The file is now on the disk!
+                val savedUri = Uri.fromFile(file)
                 println("Photo saved successfully: ${file.absolutePath}")
+                onImageCaptured(savedUri)
             }
 
             override fun onError(exception: ImageCaptureException) {

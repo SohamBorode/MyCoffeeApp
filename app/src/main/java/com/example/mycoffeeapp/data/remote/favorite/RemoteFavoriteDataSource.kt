@@ -1,7 +1,5 @@
 package com.example.mycoffeeapp.data.remote.favorite
 
-import com.example.mycoffeeapp.data.model.cart.CartItem
-
 class RemoteFavoriteDataSource(
     private val favoriteApiService: FavoriteApiService
 ) : FavoriteDataSource {

@@ -1,7 +1,5 @@
 package com.example.mycoffeeapp.data.remote.cart
 
-import androidx.compose.ui.res.painterResource
-import com.example.mycoffeeapp.data.model.CoffeeItem
 import com.example.mycoffeeapp.data.model.cart.CartItem
 
 class DemoCartDataSource : CartDataSource {

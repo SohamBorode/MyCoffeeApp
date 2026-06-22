@@ -1,19 +1,14 @@
 package com.example.mycoffeeapp.ui.screens.favorite
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.example.mycoffeeapp.data.mapper.toDomainModel
 import com.example.mycoffeeapp.data.model.CoffeeItem
 import com.example.mycoffeeapp.data.repository.CoffeeRepository
 import com.example.mycoffeeapp.data.repository.favorite.FavoriteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlin.collections.emptyList
 
 sealed interface FavoriteUiState {
     data object Loading : FavoriteUiState
@@ -42,9 +37,19 @@ class FavoriteViewModel(
     fun loadCoffeeData() {
         viewModelScope.launch {
             _uiState.value = FavoriteUiState.Loading
+            val favoriteResult = runCatching {
+                favoriteRepository.loadFavorites()
+            }
+            favoriteResult.onFailure { err ->
+                _uiState.value = FavoriteUiState.Error(
+                    err.localizedMessage ?: "Failed to load favorites"
+                )
+            }
+            if (favoriteResult.isFailure) return@launch
+
             coffeeRepository.fetchAllCoffees()
-                .onSuccess { dtoList ->
-                    _allCoffeeList.value = dtoList.map { it.toDomainModel() }
+                .onSuccess { coffeeList ->
+                    _allCoffeeList.value = coffeeList
                     applyFavoriteList()
                 }
                 .onFailure { err ->
@@ -64,7 +69,13 @@ class FavoriteViewModel(
 
     fun toggleFavorite(coffeeId: String) {
         viewModelScope.launch {
-            favoriteRepository.toggleFavorite(coffeeId)
+            runCatching {
+                favoriteRepository.toggleFavorite(coffeeId)
+            }.onFailure { err ->
+                _uiState.value = FavoriteUiState.Error(
+                    err.localizedMessage ?: "Failed to update favorite"
+                )
+            }
         }
     }
 

@@ -1,24 +1,37 @@
 package com.example.mycoffeeapp.data.remote.profile
 
-import com.example.mycoffeeapp.R
-
+import android.content.Context
+import com.example.mycoffeeapp.data.model.dto.ProfileDto
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-data class User (
-    val username : String = "Soham Borode",
-    val profileImg : Int = R.drawable.coffee_5
-)
+class DemoProfileDataSource @Inject constructor(
+    private val context: Context
+) : ProfileDataSource {
 
-class DemoProfileDataSource @Inject constructor() : ProfileDataSource {
-    override suspend fun getProfileData(): Set<String> {
-        // Instantiate User to access its properties
-        val user = User()
-        val username = user.username
-        val profileImg = user.profileImg.toString() // Added parentheses
-        return setOf(username, profileImg)
+
+
+    // making the shared prefence for surviing the updates on app closed
+    private val sharedPrefs = context.getSharedPreferences("profile_prefs", Context.MODE_PRIVATE)
+
+    private var profile = ProfileDto(
+        username = "Soham Borode",
+        profileImageUri = null
+    )
+
+    override suspend fun getProfileData(): ProfileDto {
+        // 2. Load the saved URI from the "Notebook" (Disk)
+        val mySavedUri = sharedPrefs.getString("profile_image_path", null)
+        // 3. Update the local variable so the app has the latest data
+        profile = profile.copy(profileImageUri = mySavedUri)
+        return profile
     }
 
-    override suspend fun updateProfileData() {
-        TODO("Not yet implemented")
+    override suspend fun updateProfileData(profile: ProfileDto) {
+        this.profile = profile
+
+        val editor = sharedPrefs.edit()
+
+        editor.putString("profile_image_path", profile.profileImageUri).apply()
     }
 }

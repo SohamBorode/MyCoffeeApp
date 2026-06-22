@@ -1,7 +1,9 @@
 package com.example.mycoffeeapp.data.remote.profile
 
-interface ProfileDataSource {
-    suspend fun getProfileData() : Set<String>
+import com.example.mycoffeeapp.data.model.dto.ProfileDto
 
-    suspend fun updateProfileData()
+interface ProfileDataSource {
+    suspend fun getProfileData(): ProfileDto
+
+    suspend fun updateProfileData(profile: ProfileDto)
 }

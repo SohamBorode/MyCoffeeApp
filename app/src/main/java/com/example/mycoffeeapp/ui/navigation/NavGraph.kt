@@ -48,7 +48,7 @@ fun NavGraph() {
             WelcomeScreen(navControllerX)
         }
         composable<NavRoutes.NavBarGraph> {
-            NavBarGraph(navControllerX)
+            NavBarGraph()
         }
     }
 }

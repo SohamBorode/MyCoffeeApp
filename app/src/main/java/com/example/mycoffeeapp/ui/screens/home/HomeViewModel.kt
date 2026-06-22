@@ -3,7 +3,6 @@ package com.example.mycoffeeapp.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mycoffeeapp.data.model.CoffeeItem
-import com.example.mycoffeeapp.data.mapper.toDomainModel
 import com.example.mycoffeeapp.data.repository.CoffeeRepository
 import com.example.mycoffeeapp.data.repository.favorite.FavoriteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +36,20 @@ class HomeViewModel(
     private var searchJob: Job? = null
 
     init {
+        viewModelScope.launch {
+            runCatching {
+                favoriteRepository.loadFavorites()
+            }.onFailure { err ->
+                _uiState.value = HomeUiState.Error(
+                    err.localizedMessage ?: "Failed to load favorites"
+                )
+            }
+        }
+        viewModelScope.launch {
+            favoriteRepository.favoriteIds.collect {
+                applyVisibleList()
+            }
+        }
         loadCoffeeData()
     }
 
@@ -44,9 +57,8 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.value = HomeUiState.Loading
             repository.fetchAllCoffees()
-                .onSuccess { dtoList ->
-                    val domainList = dtoList.map { it.toDomainModel() }
-                    _allCoffeeList.value = domainList
+                .onSuccess { coffeeList ->
+                    _allCoffeeList.value = coffeeList
                     _searchResultList.value = null
                     applyVisibleList()
                 }
@@ -82,9 +94,8 @@ class HomeViewModel(
     private suspend fun searchCoffee(query: String) {
         _uiState.value = HomeUiState.Loading
         repository.searchCoffees(query)
-            .onSuccess { dtoList ->
-                val domainList = dtoList.map { it.toDomainModel() }
-                _searchResultList.value = domainList
+            .onSuccess { coffeeList ->
+                _searchResultList.value = coffeeList
                 applyVisibleList()
             }
             .onFailure { err ->
@@ -116,8 +127,15 @@ class HomeViewModel(
 
     fun toggleFavorite(itemId: String) {
         viewModelScope.launch {
-            favoriteRepository.toggleFavorite(itemId)
-            applyVisibleList()
+            runCatching {
+                favoriteRepository.toggleFavorite(itemId)
+            }.onSuccess {
+                applyVisibleList()
+            }.onFailure { err ->
+                _uiState.value = HomeUiState.Error(
+                    err.localizedMessage ?: "Failed to update favorite"
+                )
+            }
         }
     }
 

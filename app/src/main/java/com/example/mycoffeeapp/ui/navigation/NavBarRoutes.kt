@@ -18,4 +18,7 @@ sealed class NavBarRoutes {
 
     @Serializable
     data class CoffeeDetailsScreen(val coffeeId : String) : NavBarRoutes()
+
+    @Serializable
+    data object CameraPreview: NavBarRoutes()
 }

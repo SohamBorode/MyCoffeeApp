@@ -1,35 +1,31 @@
 package com.example.mycoffeeapp.data.repository
 
-import androidx.compose.ui.unit.Constraints
 import com.example.mycoffeeapp.constants.Constants
-import com.example.mycoffeeapp.data.model.dto.CoffeeItemDto
+import com.example.mycoffeeapp.data.mapper.toDomainModel
+import com.example.mycoffeeapp.data.model.CoffeeItem
 import com.example.mycoffeeapp.data.remote.CoffeeApiService
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
-class CoffeeRepository(private val apiService: CoffeeApiService){
-    suspend fun fetchAllCoffees() : Result<List<CoffeeItemDto>> {
+class CoffeeRepository(private val apiService: CoffeeApiService) {
+    suspend fun fetchAllCoffees(): Result<List<CoffeeItem>> {
         return  try {
-            if(Constants.USE_BACKEND){
-            val response = apiService.getAllCoffees()
-            Result.success(response)
-            }else{
+            if (Constants.USE_BACKEND) {
+                val response = apiService.getAllCoffees().map { it.toDomainModel() }
+                Result.success(response)
+            } else {
                 val response = getDemoCoffees()
                 Result.success(response)
             }
-
-        }catch (e : Exception){
-            if(!Constants.USE_BACKEND){
+        } catch (e: Exception) {
+            if (!Constants.USE_BACKEND) {
                 val response = getDemoCoffees()
                 Result.success(response)
-            }else{
-            Result.failure(e);
+            } else {
+                Result.failure(e)
             }
         }
     }
 
-    suspend fun searchCoffees(query: String): Result<List<CoffeeItemDto>> {
+    suspend fun searchCoffees(query: String): Result<List<CoffeeItem>> {
         val normalizedQuery = query.trim()
         if (normalizedQuery.isBlank()) {
             return fetchAllCoffees()
@@ -37,23 +33,12 @@ class CoffeeRepository(private val apiService: CoffeeApiService){
 
         return try {
             if (Constants.USE_BACKEND) {
-                val response = apiService.searchCoffees(normalizedQuery)
+                val response = apiService.searchCoffees(normalizedQuery).map { it.toDomainModel() }
                 Result.success(response)
             } else {
                 val response = coffeeItemList.filter {
                     it.name.contains(normalizedQuery, ignoreCase = true) ||
                         it.name.equals(normalizedQuery, ignoreCase = true)
-                }.map { item ->
-                    CoffeeItemDto(
-                        id = item.id,
-                        categoryId = item.categoryId,
-                        name = item.name,
-                        description = item.description,
-                        price = item.price,
-                        imageUrl = item.imageUrl,
-                        rating = item.rating,
-                        reviewCount = item.reviewCount
-                    )
                 }
                 Result.success(response)
             }
@@ -62,17 +47,6 @@ class CoffeeRepository(private val apiService: CoffeeApiService){
                 val response = coffeeItemList.filter {
                     it.name.contains(normalizedQuery, ignoreCase = true) ||
                         it.name.equals(normalizedQuery, ignoreCase = true)
-                }.map { item ->
-                    CoffeeItemDto(
-                        id = item.id,
-                        categoryId = item.categoryId,
-                        name = item.name,
-                        description = item.description,
-                        price = item.price,
-                        imageUrl = item.imageUrl,
-                        rating = item.rating,
-                        reviewCount = item.reviewCount
-                    )
                 }
                 Result.success(response)
             } else {
@@ -81,33 +55,7 @@ class CoffeeRepository(private val apiService: CoffeeApiService){
         }
     }
 
-    private fun getDemoCoffees(): List<CoffeeItemDto> {
-        // Maps your existing coffeeItemList to DTOs for the ViewModel
-        return coffeeItemList.map { item ->
-            CoffeeItemDto(
-                id = item.id,
-                name = item.name,
-                categoryId = item.categoryId,
-                description = item.description,
-                price = item.price,
-                imageUrl = item.imageUrl,
-                rating = item.rating,
-                reviewCount = item.reviewCount
-            )
-        }
+    private fun getDemoCoffees(): List<CoffeeItem> {
+        return coffeeItemList
     }
-
-
-    private val _favoriteIds = MutableStateFlow<Set<String>>(emptySet())
-    val favoriteIds: StateFlow<Set<String>> = _favoriteIds.asStateFlow()
-
-    fun toggleFavorite(itemId: String) {
-        val current = _favoriteIds.value
-        if (current.contains(itemId)) {
-            _favoriteIds.value = current - itemId // Delete
-        } else {
-            _favoriteIds.value = current + itemId // Add
-        }
-    }
-
 }
