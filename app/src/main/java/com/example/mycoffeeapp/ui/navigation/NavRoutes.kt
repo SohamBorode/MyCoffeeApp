@@ -8,5 +8,11 @@ sealed class NavRoutes {
     data object WelcomeScreen : NavRoutes()
 
     @Serializable
+    data object LoginScreen  : NavRoutes()
+
+    @Serializable
+    data object SignupScreen  : NavRoutes()
+
+    @Serializable
     data object NavBarGraph : NavRoutes()
 }

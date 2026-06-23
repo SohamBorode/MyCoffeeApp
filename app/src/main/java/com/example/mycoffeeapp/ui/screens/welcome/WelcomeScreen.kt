@@ -69,7 +69,7 @@ fun WelcomeScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(30.dp))
             Button(
                 onClick = {
-                    navController.navigate(NavRoutes.NavBarGraph) {
+                    navController.navigate(NavRoutes.LoginScreen) {
                         popUpTo(NavRoutes.WelcomeScreen) { inclusive = true }
                     }
                 },

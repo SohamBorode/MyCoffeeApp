@@ -7,15 +7,21 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.mycoffeeapp.di.ServiceLocator
+import com.example.mycoffeeapp.ui.screens.loginsignp.AuthViewModel
+import com.example.mycoffeeapp.ui.screens.loginsignp.LoginScreen
+import com.example.mycoffeeapp.ui.screens.loginsignp.SignupScreen
 import com.example.mycoffeeapp.ui.screens.welcome.WelcomeScreen
 
 @Composable
 fun NavGraph() {
     val navControllerX = rememberNavController()
 
+    val authViewModel = remember { AuthViewModel(ServiceLocator.authRepository) }
     NavHost(
         navController = navControllerX,
         startDestination = NavRoutes.WelcomeScreen,
@@ -47,8 +53,25 @@ fun NavGraph() {
         composable<NavRoutes.WelcomeScreen> {
             WelcomeScreen(navControllerX)
         }
+
+        composable<NavRoutes.LoginScreen> {
+            LoginScreen(
+                navControllerX,
+                authViewModel = authViewModel
+            )
+        }
+
+        composable<NavRoutes.SignupScreen> {
+            SignupScreen(
+                navControllerX,
+                authViewModel = authViewModel
+            )
+        }
+
+
         composable<NavRoutes.NavBarGraph> {
             NavBarGraph()
         }
     }
 }
+
