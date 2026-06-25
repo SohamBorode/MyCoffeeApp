@@ -1,5 +1,6 @@
 package com.example.mycoffeeapp.ui.screens.loginsignp
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
@@ -15,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -22,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.mycoffeeapp.data.local.SessionManager
 import com.example.mycoffeeapp.ui.navigation.NavRoutes
 import com.example.mycoffeeapp.ui.theme.CafeBrown
 import com.example.mycoffeeapp.ui.theme.CafeCream
@@ -39,7 +42,7 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
     // State for the password input field
     var password by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
-
+    val sessionManager = remember { SessionManager(context) }
     val state by authViewModel.uiState.collectAsState()
 
     // Reset state when entering to prevent stale states from previous screens
@@ -50,6 +53,7 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
     LaunchedEffect(state) {
         when (state) {
             is AuthUiState.Success -> {
+                sessionManager.saveLogin((state as AuthUiState.Success).session)
                 navControllerX.navigate(NavRoutes.NavBarGraph) {
                     // Clear the entire auth flow backstack
                     popUpTo(NavRoutes.WelcomeScreen) { inclusive = true }
@@ -85,26 +89,24 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
 
 
             Spacer(modifier = Modifier.height(16.dp))
-
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text(text = "Email/Username") }
             )
-
             Spacer(modifier = Modifier.height(16.dp))
-
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text(text = "Password") }
             )
-
             Spacer(modifier = Modifier.height(16.dp))
-
             // Login Button
             Button(
-                onClick = { authViewModel.login(email, password) },
+                onClick = {
+                    authViewModel.login(email, password)
+
+                          },
 
                 // Logic Fix: Disable the button while loading to prevent multiple requests
                 enabled = state !is AuthUiState.Loading,
@@ -122,6 +124,7 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
 
             // Navigation to Signup Page
             TextButton(onClick = {
+                val sharedPref = context.getSharedPreferences("UserInfo", Context.MODE_PRIVATE)
                 navControllerX.navigate(NavRoutes.SignupScreen) {
                     // Pop Login so the stack is [Welcome, Signup]
                     popUpTo(NavRoutes.LoginScreen) { inclusive = true }

@@ -11,15 +11,15 @@ import retrofit2.http.POST
 interface AuthApiService {
 
     @POST("auth/login")
-    fun login(@Body loginRequest: LoginRequest): AuthSession
+    suspend fun login(@Body loginRequest: LoginRequest): AuthSession
 
     @POST("auth/signup")
-    fun signup(@Body signupRequest: SignupRequest): AuthSession
+    suspend fun signup(@Body signupRequest: SignupRequest): AuthSession
 
     @GET("auth/me")
-    fun getCurrentUser(): AppUser
+    suspend fun getCurrentUser(): AppUser
 
     @POST("auth/logout")
-    fun logout()
+    suspend fun logout()
 
 }
