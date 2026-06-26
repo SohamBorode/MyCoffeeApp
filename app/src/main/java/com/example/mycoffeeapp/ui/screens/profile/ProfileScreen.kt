@@ -63,7 +63,12 @@ import com.example.mycoffeeapp.ui.theme.OffWhite
 import com.example.mycoffeeapp.ui.theme.PureWhite
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
@@ -72,6 +77,10 @@ fun ProfileScreen(
     val state by viewModel.uiState.collectAsState()
     var showImageMenu by remember { mutableStateOf(false) }
 
+    val activeSheet by viewModel.activeSheet.collectAsState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
+    val accountState by viewModel.accountUiState.collectAsState()
 
     /// camera
     val context = LocalContext.current
@@ -215,9 +224,9 @@ fun ProfileScreen(
                                             showImageMenu = false
                                             val permissionCheckResult =
                                                 ContextCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.CAMERA
-                                            )
+                                                    context,
+                                                    Manifest.permission.CAMERA
+                                                )
 
                                             if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
                                                 // Already have permission, navigate immediately
@@ -225,7 +234,8 @@ fun ProfileScreen(
                                             } else {
                                                 // Request permission
                                                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                            }                                        }
+                                            }
+                                        }
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Gallery") },
@@ -299,18 +309,43 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(40.dp))
 
                     // Menu Options (End Points for Navigation)
-                    ProfileMenuItem(title = "My Account", onClick = { /* Navigate to Account */ })
-                    ProfileMenuItem(title = "Orders", onClick = { /* Navigate to Orders */ })
+                    ProfileMenuItem(
+                        title = "My Account",
+                        onClick = { viewModel.showBottonSheet(ProfileSheetType.ACCOUNT) })
+                    ProfileMenuItem(title = "Orders", onClick = {
+                        viewModel.showBottonSheet(
+                            ProfileSheetType.ORDERS
+                        )
+                    })
                     ProfileMenuItem(
                         title = "Terms and Conditions",
-                        onClick = { /* Navigate to Terms */ })
-                    ProfileMenuItem(title = "Help Center", onClick = { /* Navigate to Help */ })
+                        onClick = { viewModel.showBottonSheet(ProfileSheetType.TERMS) })
+                    ProfileMenuItem(
+                        title = "Help Center",
+                        onClick = { viewModel.showBottonSheet(ProfileSheetType.HELP) })
 
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
 
 
+        }
+    }
+
+    if (activeSheet != null) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.showBottonSheet(null) },
+            sheetState = sheetState,
+            containerColor = CafeCream,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+           when(activeSheet){
+               ProfileSheetType.ACCOUNT -> AccountSheetContent(accountState)
+               ProfileSheetType.ORDERS -> OrdersSheetContent()
+               ProfileSheetType.TERMS -> TermsSheetContent()
+               ProfileSheetType.HELP -> HelpCenterSheetContent()
+               else -> {}
+           }
         }
     }
 }

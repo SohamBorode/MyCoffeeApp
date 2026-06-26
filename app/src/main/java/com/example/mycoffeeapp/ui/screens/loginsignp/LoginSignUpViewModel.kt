@@ -2,6 +2,7 @@ package com.example.mycoffeeapp.ui.screens.loginsignp
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mycoffeeapp.data.local.SessionManager
 import com.example.mycoffeeapp.data.model.auth.AuthSession
 import com.example.mycoffeeapp.data.model.auth.LoginRequest
 import com.example.mycoffeeapp.data.model.auth.SignupRequest
@@ -19,7 +20,10 @@ sealed interface AuthUiState {
 }
 
 
-class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
+class AuthViewModel(
+    private val authRepository: AuthRepository,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idel)
 
@@ -41,6 +45,7 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
             try {
                 val request = LoginRequest(email = email, password = password)
                 val session = authRepository.login(request)
+                sessionManager.saveSession(session)
                 _uiState.value = AuthUiState.Success(session)
             } catch (e: Exception) {
                 _uiState.value = AuthUiState.Error(e.message ?: "An unknown  error occurred")
@@ -59,6 +64,7 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
                     password = password
                 )
                 val session = authRepository.signup(request)
+                sessionManager.saveSession(session)
                 _uiState.value = AuthUiState.Success(session)
             } catch (e: Exception) {
                 _uiState.value = AuthUiState.Error(e.message ?: "Unknown error, unable to signup")
@@ -67,6 +73,12 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     }
 
     fun logout() {
-
+        viewModelScope.launch {
+            runCatching {
+                authRepository.logout()
+            }
+            sessionManager.logout()
+            _uiState.value = AuthUiState.Idel
+        }
     }
 }

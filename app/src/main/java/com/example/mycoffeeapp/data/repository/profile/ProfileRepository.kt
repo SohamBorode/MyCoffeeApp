@@ -3,7 +3,9 @@ package com.example.mycoffeeapp.data.repository.profile
 import com.example.mycoffeeapp.constants.Constants
 import com.example.mycoffeeapp.data.mapper.toDomainModel
 import com.example.mycoffeeapp.data.mapper.toDto
+import com.example.mycoffeeapp.data.model.Account
 import com.example.mycoffeeapp.data.model.Profile
+import com.example.mycoffeeapp.data.model.dto.AccountDto
 import com.example.mycoffeeapp.data.remote.profile.ProfileDataSource
 
 class ProfileRepository(
@@ -24,5 +26,14 @@ class ProfileRepository(
         } else {
             demo.updateProfileData(profile.toDto())
         }
+    }
+
+    suspend fun getAccountDetails(): Account {
+        val dto = if (Constants.USE_BACKEND) {
+            remote.getAccountDetails()
+        } else {
+            demo.getAccountDetails()
+        }
+        return dto.toDomainModel()
     }
 }

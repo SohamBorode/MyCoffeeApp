@@ -21,7 +21,12 @@ import com.example.mycoffeeapp.ui.screens.welcome.WelcomeScreen
 fun NavGraph() {
     val navControllerX = rememberNavController()
 
-    val authViewModel = remember { AuthViewModel(ServiceLocator.authRepository) }
+    val authViewModel = remember {
+        AuthViewModel(
+            authRepository = ServiceLocator.authRepository,
+            sessionManager = ServiceLocator.sessionManager
+        )
+    }
     NavHost(
         navController = navControllerX,
         startDestination = NavRoutes.WelcomeScreen,

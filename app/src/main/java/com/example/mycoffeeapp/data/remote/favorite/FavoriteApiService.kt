@@ -6,12 +6,12 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface FavoriteApiService {
-    @GET("favorite")
+    @GET("api/users/favorite")
     suspend fun getFavoriteIds(): List<String>
 
-    @POST("favorite/{coffeeId}")
+    @POST("api/users/favorites/{coffeeId}")
     suspend fun addFavorite(@Path("coffeeId") coffeeId: String)
 
-    @DELETE("favorite/{coffeeId}")
+    @DELETE("api/users/favorites/{coffeeId}")
     suspend fun deleteFavoriteItem(@Path("coffeeId") coffeeId: String)
 }

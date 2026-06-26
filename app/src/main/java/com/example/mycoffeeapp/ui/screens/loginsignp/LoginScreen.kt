@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -29,6 +30,7 @@ import com.example.mycoffeeapp.ui.navigation.NavRoutes
 import com.example.mycoffeeapp.ui.theme.CafeBrown
 import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
+import com.example.mycoffeeapp.ui.theme.DarkMocha
 import com.example.mycoffeeapp.ui.theme.LightGray
 import com.example.mycoffeeapp.ui.theme.OffWhite
 import com.example.mycoffeeapp.ui.theme.PureWhite
@@ -53,7 +55,6 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
     LaunchedEffect(state) {
         when (state) {
             is AuthUiState.Success -> {
-                sessionManager.saveLogin((state as AuthUiState.Success).session)
                 navControllerX.navigate(NavRoutes.NavBarGraph) {
                     // Clear the entire auth flow backstack
                     popUpTo(NavRoutes.WelcomeScreen) { inclusive = true }
@@ -106,15 +107,14 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
                 onClick = {
                     authViewModel.login(email, password)
 
-                          },
+                },
 
                 // Logic Fix: Disable the button while loading to prevent multiple requests
                 enabled = state !is AuthUiState.Loading,
-                colors = ButtonColors(
+                colors = ButtonDefaults.buttonColors(
                     containerColor = CafeBrown,
                     disabledContainerColor = LightGray,
-                    disabledContentColor = PureWhite,
-                    contentColor = OffWhite
+                    contentColor = DarkMocha
                 )
             ) {
                 Text(text = if (state is AuthUiState.Loading) "Logging in..." else "Login")

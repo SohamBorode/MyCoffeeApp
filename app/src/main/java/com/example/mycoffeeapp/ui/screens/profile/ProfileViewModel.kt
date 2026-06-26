@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class ProfileSheetType {
+    ACCOUNT, ORDERS, TERMS, HELP
+}
 
 sealed interface ProfileImageAction {
     data object Camera : ProfileImageAction
@@ -28,6 +31,28 @@ sealed interface ProfileUiState {
 
     data class Error(val msg: String) : ProfileUiState
 }
+
+sealed interface AccountUiState {
+    object Loading : AccountUiState
+
+    data class Success(
+        val username: String,
+        val fullName: String,
+        val email: String,
+        val dob: String,
+        val phonNo: String,
+        val passwordReset: String? = null,
+        val profileImageUri: String? = null,
+        val defaultProfileImage: Int = R.drawable.coffee_5,
+        val isLoggedIn: Boolean,
+        val isLoggedOut: Boolean
+    ) : AccountUiState
+
+    data class Error(val msg: String) : AccountUiState
+}
+
+sealed interface OrdersUiState{}
+
 
 class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -78,8 +103,11 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
         when (action) {
             is ProfileImageAction.SetImage -> onProfileImageSelected(action.uri)
             ProfileImageAction.Remove -> removeProfileImage()
-            ProfileImageAction.Camera -> {/* camera open action */ }
-            ProfileImageAction.Gallery -> {/* gallery open action */ }
+            ProfileImageAction.Camera -> {/* camera open action */
+            }
+
+            ProfileImageAction.Gallery -> {/* gallery open action */
+            }
         }
     }
 
@@ -99,4 +127,62 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
             }
         }
     }
+
+
+    // Selectin which sheet to show
+    private val _activeSheet = MutableStateFlow<ProfileSheetType?>(null)
+    val activeSheet = _activeSheet.asStateFlow()
+
+
+    fun showBottonSheet(type: ProfileSheetType?) {
+        _activeSheet.value = type
+        if (type == ProfileSheetType.ACCOUNT) {
+            loadAccountDetails()
+        }
+    }
+
+    // Bottom Sheet Visibility
+    private val _showAccountSheet = MutableStateFlow(false)
+    val showAccountSheet = _showAccountSheet.asStateFlow()
+
+    // Bottom Sheet Data State
+    private val _accountUiState = MutableStateFlow<AccountUiState>(AccountUiState.Loading)
+    val accountUiState = _accountUiState.asStateFlow()
+
+
+    private fun loadAccountDetails() {
+        viewModelScope.launch {
+            _accountUiState.value = AccountUiState.Loading
+            runCatching {
+                profileRepository.getAccountDetails()
+            }
+                .onSuccess {
+                    accountDetails ->
+                    _accountUiState.value = AccountUiState.Success(
+                        username = accountDetails.username,
+                        fullName = accountDetails.fullName,
+                        email = accountDetails.email,
+                        dob = accountDetails.dob,
+                        phonNo = accountDetails.phonNo,
+                        isLoggedIn = true,
+                        isLoggedOut = false
+                    )
+                }
+                .onFailure { err ->
+                    _accountUiState.value = AccountUiState.Error(
+                        err.localizedMessage ?: "Unknown error occurred in loading account"
+                    )
+                }
+        }
+    }
+
+    private fun loadTermsAndCondition(){
+
+    }
+
+    private fun loadOrders(){}
+
+    private fun loadHelp(){}
+
+
 }

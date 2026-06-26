@@ -1,52 +1,69 @@
 package com.example.mycoffeeapp.data.remote
 
+import android.content.Context
+import com.example.mycoffeeapp.data.local.SessionManager
 import com.example.mycoffeeapp.data.remote.auth.AuthApiService
 import com.example.mycoffeeapp.data.remote.cart.CartApiService
 import com.example.mycoffeeapp.data.remote.favorite.FavoriteApiService
 import com.example.mycoffeeapp.data.remote.profile.ProfileApiService
 import com.google.gson.Gson
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
 
-object RetrofitClient{ // determine that only one networking clint exit throughout the lifetime of the application, for memory and conn. res conservation
+object RetrofitClient { // determine that only one networking clint exit throughout the lifetime of the application, for memory and conn. res conservation
     private const val BASE_URL = "http://10.0.2.2:8080/"
 
-    val authApiService: AuthApiService by lazy {
-        Retrofit.Builder()
+    private lateinit var sessionManager: SessionManager
+
+    fun init(manager: SessionManager) {
+        this.sessionManager = manager
+    }
+
+    private val authInterceptor = Interceptor { chain ->
+        val token = if (::sessionManager.isInitialized) sessionManager.getAccessToken() else null
+        val requestBuilder = chain.request().newBuilder()
+        if (!token.isNullOrBlank()) {
+            requestBuilder.addHeader("Authorization", "Bearer $token")
+        }
+        chain.proceed(requestBuilder.build())
+    }
+
+
+    private val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder().addInterceptor(authInterceptor).build()
+    }
+
+    private fun retrofit(): Retrofit {
+        return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create()) // Convert JSON to kotlin object
             .build()
+    }
+
+    val authApiService: AuthApiService by lazy {
+        retrofit()
             .create(AuthApiService::class.java)
     }
     val favoriteApiService: FavoriteApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create()) // Convert JSON to kotlin object
-            .build()
+        retrofit()
             .create(FavoriteApiService::class.java)
     }
 
-    val profileApiService : ProfileApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create()) // Convert JSON to kotlin object
-            .build()
+    val profileApiService: ProfileApiService by lazy {
+        retrofit()
             .create(ProfileApiService::class.java)
     }
 
-    val apiService : CoffeeApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create()) // Convert JSON to kotlin object
-            .build()
+    val apiService: CoffeeApiService by lazy {
+        retrofit()
             .create(CoffeeApiService::class.java)
     }
-    val cartRemoteApiService : CartApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+    val cartRemoteApiService: CartApiService by lazy {
+        retrofit()
             .create(CartApiService::class.java)
     }
 }

@@ -1,6 +1,7 @@
 package com.example.mycoffeeapp.di
 
 import android.content.Context
+import com.example.mycoffeeapp.data.local.SessionManager
 import com.example.mycoffeeapp.data.remote.RetrofitClient
 import com.example.mycoffeeapp.data.remote.auth.DemoAuthDataSource
 import com.example.mycoffeeapp.data.remote.auth.RemoteAuthDataSource
@@ -43,9 +44,14 @@ object ServiceLocator {
     }
     private lateinit var applicationContext: Context
 
+    val sessionManager: SessionManager by lazy {
+        SessionManager(applicationContext)
+    }
+
     // Call this once in MainActivity
     fun init(context: Context) {
         applicationContext = context.applicationContext
+        RetrofitClient.init(sessionManager)
     }
 
     val profileRepository: ProfileRepository by lazy {

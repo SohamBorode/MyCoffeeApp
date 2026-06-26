@@ -9,15 +9,15 @@ import retrofit2.http.Path
 
 interface CartApiService{
 
-    @GET("/cart/items")
+    @GET("api/cart/items")
     suspend fun getCartItem(): List<CartItemDto>
 
-    @POST("/cart/add")
+    @POST("api/cart/add")
     suspend fun addToCart(@Body item: CartItemDto)
 
-    @DELETE("/cart/delete/{cartItemId}")
+    @DELETE("api/cart/delete/{cartItemId}")
     suspend fun deleteFromCart(@Path("cartItemId") cartItemId : String)
 
-    @POST("/cart/cartItem/update")
+    @POST("api/cart/cartItem/update")
     suspend fun updateCartItem(@Body cartItem: CartItemDto)
 }
