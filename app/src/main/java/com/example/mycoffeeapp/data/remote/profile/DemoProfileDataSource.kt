@@ -13,7 +13,7 @@ class DemoProfileDataSource @Inject constructor(
 ) : ProfileDataSource {
 
 
-    // making the shared prefence for surviing the updates on app closed
+    // making the shared preference for surviving the updates on app closed
     private val sharedPrefs = context.getSharedPreferences("profile_prefs", Context.MODE_PRIVATE)
 
     private var profile = ProfileDto(

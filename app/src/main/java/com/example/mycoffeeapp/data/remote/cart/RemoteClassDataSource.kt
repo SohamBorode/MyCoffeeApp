@@ -21,4 +21,8 @@ class RemoteClassDataSource(private val api : CartApiService) : CartDataSource {
         api.deleteFromCart(cartItemId)
     }
 
+    override suspend fun clearCart() {
+        api.clearCart()
+    }
+
 }

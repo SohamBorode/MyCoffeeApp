@@ -14,10 +14,10 @@ class CartRepository(
         return remote.getCartItems()
     }
 
-    suspend fun deleteCartItem(cartItemId : String){
-        if(Constants.USE_BACKEND){
+    suspend fun deleteCartItem(cartItemId: String) {
+        if (Constants.USE_BACKEND) {
             remote.removeFromCart(cartItemId)
-        }else{
+        } else {
             demo.removeFromCart(cartItemId)
         }
     }
@@ -31,12 +31,15 @@ class CartRepository(
     }
 
     suspend fun updateCartItem(cartItem: CartItem) {
-        if (Constants.USE_BACKEND){
+        if (Constants.USE_BACKEND) {
             remote.updateCartItem(cartItem)
-        }else{
+        } else {
             demo.updateCartItem(cartItem)
         }
     }
 
+    suspend fun clearCart() {
+        if (Constants.USE_BACKEND) remote.clearCart() else demo.clearCart()
+    }
 
 }

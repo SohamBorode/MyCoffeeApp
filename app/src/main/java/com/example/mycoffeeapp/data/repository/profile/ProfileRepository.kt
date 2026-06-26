@@ -6,6 +6,7 @@ import com.example.mycoffeeapp.data.mapper.toDto
 import com.example.mycoffeeapp.data.model.Account
 import com.example.mycoffeeapp.data.model.Profile
 import com.example.mycoffeeapp.data.model.dto.AccountDto
+import com.example.mycoffeeapp.data.model.dto.OrderDto
 import com.example.mycoffeeapp.data.remote.profile.ProfileDataSource
 
 class ProfileRepository(
@@ -35,5 +36,15 @@ class ProfileRepository(
             demo.getAccountDetails()
         }
         return dto.toDomainModel()
+    }
+
+    suspend fun getOrders(): List<OrderDto> {
+        val orders = if (Constants.USE_BACKEND){
+            remote.getOrders()
+        }else{
+            demo.getOrders()
+        }
+
+        return  orders
     }
 }

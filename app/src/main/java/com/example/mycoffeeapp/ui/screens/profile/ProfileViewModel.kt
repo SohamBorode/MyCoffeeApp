@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.data.model.Profile
+import com.example.mycoffeeapp.data.model.dto.OrderDto
 import com.example.mycoffeeapp.data.repository.profile.ProfileRepository
+import com.example.mycoffeeapp.ui.screens.cart.CartUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -51,7 +53,11 @@ sealed interface AccountUiState {
     data class Error(val msg: String) : AccountUiState
 }
 
-sealed interface OrdersUiState{}
+sealed interface OrdersUiState {
+    object Loading : OrdersUiState
+    data class Success(val orders: List<OrderDto>) : OrdersUiState
+    data class Error(val msg: String) : OrdersUiState
+}
 
 
 class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewModel() {
@@ -156,8 +162,7 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
             runCatching {
                 profileRepository.getAccountDetails()
             }
-                .onSuccess {
-                    accountDetails ->
+                .onSuccess { accountDetails ->
                     _accountUiState.value = AccountUiState.Success(
                         username = accountDetails.username,
                         fullName = accountDetails.fullName,
@@ -176,13 +181,29 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
         }
     }
 
-    private fun loadTermsAndCondition(){
+    private fun loadTermsAndCondition() {
 
     }
 
-    private fun loadOrders(){}
 
-    private fun loadHelp(){}
+    private val _orderUiState = MutableStateFlow<OrdersUiState>(OrdersUiState.Loading)
+    val oderUiState = _orderUiState.asStateFlow()
+
+    private fun loadOrders() {
+        viewModelScope.launch {
+            _orderUiState.value = OrdersUiState.Loading
+            runCatching {
+                profileRepository.getOrders()
+            }.onSuccess { orders ->
+                _orderUiState.value = OrdersUiState.Success(orders)
+            }.onFailure { err ->
+                _orderUiState.value =
+                    OrdersUiState.Error(err.localizedMessage ?: "Failed to load orders")
+            }
+        }
+    }
+
+    private fun loadHelp() {}
 
 
 }

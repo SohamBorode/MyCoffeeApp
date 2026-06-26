@@ -67,4 +67,8 @@ class DemoCartDataSource : CartDataSource {
     override suspend fun removeFromCart(cartItemId: String) {
         demoItems.removeAll { it.id == cartItemId }
     }
+
+    override suspend fun clearCart() {
+        demoItems.clear()
+    }
 }

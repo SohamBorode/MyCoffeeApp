@@ -1,6 +1,5 @@
 package com.example.mycoffeeapp.ui.screens.cart
 
-import android.provider.MediaStore
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -29,18 +28,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -62,6 +65,7 @@ import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.data.model.cart.CartItem
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
 import com.example.mycoffeeapp.ui.theme.CafeBrown
+import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
 import com.example.mycoffeeapp.ui.theme.CafeTextGray
 import com.example.mycoffeeapp.ui.theme.Gray
@@ -70,6 +74,7 @@ import com.example.mycoffeeapp.ui.theme.PureWhite
 import java.text.NumberFormat
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
     onBackClick: () -> Unit,
@@ -78,6 +83,10 @@ fun CartScreen(
     cartCount: Int
 ) {
     val cartState by viewModel.uiState.collectAsState()
+
+    val orderConfSheet by viewModel.orderConfSheet.collectAsState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
 
     Scaffold(
         containerColor = Color(0xFFF7F1EA),
@@ -155,7 +164,9 @@ fun CartScreen(
                                     onPaymentSelected = {
                                         viewModel.selectPayment(it)
                                     },
-                                    onPlaceOrderClick = { }
+                                    onPlaceOrderClick = {
+                                        viewModel.placeOrder(state)
+                                    }
                                 )
                             }
                         }
@@ -164,6 +175,23 @@ fun CartScreen(
             }
         }
     }
+
+
+    if (orderConfSheet!=null) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.showOrderConfSheet(null) },
+            sheetState = sheetState,
+            containerColor = CafeCream,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            when(orderConfSheet){
+                OrderConfirmType.OrderConfirm -> OrderConfirmContent(onConfirmClick = { viewModel.confirmOrder() })
+                else -> {}
+            }
+        }
+    }
+
+
 }
 
 @Composable

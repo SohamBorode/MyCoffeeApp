@@ -7,4 +7,6 @@ interface CartDataSource {
     suspend fun addToCart(cartItem: CartItem)
     suspend fun updateCartItem(cartItem: CartItem)
     suspend fun removeFromCart(cartItemId: String)
+
+    suspend fun clearCart()
 }

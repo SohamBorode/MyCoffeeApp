@@ -7,6 +7,7 @@ import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.data.model.CoffeeItem
 import com.example.mycoffeeapp.data.model.cart.CartItem
 import com.example.mycoffeeapp.data.repository.cart.CartRepository
+import com.example.mycoffeeapp.ui.screens.profile.AccountUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,8 +16,8 @@ import java.util.UUID
 
 //new implementation part
 data class PaymentMethod(
-    val id : String,
-    val title : String,
+    val id: String,
+    val title: String,
     @DrawableRes val iconRes: Int
 )
 
@@ -30,6 +31,7 @@ val paymentOptions = listOf(
     PaymentMethod("prepaid", "Prepaid / Gift Card", R.drawable.gift_card),
     PaymentMethod("bnpl", "Buy Now Pay Later", R.drawable.pay_later)
 )
+
 data class CartSummary(
     val subTotal: Double,
     val deliveryFee: Double,
@@ -44,11 +46,16 @@ sealed interface CartUiState {
 
         val paymentMethod: List<PaymentMethod>,
         val selectedPaymentMethod: PaymentMethod,
-        val isPaymentCardExpanded : Boolean
+        val isPaymentCardExpanded: Boolean
     ) : CartUiState
+
     data class Error(val msg: String) : CartUiState
 }
 
+
+enum class OrderConfirmType {
+    OrderConfirm
+}
 
 class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<CartUiState>(CartUiState.Loading)
@@ -58,11 +65,10 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
         get() = (uiState.value as? CartUiState.Success)?.cartCoffeeList?.sumOf { it.quantity } ?: 0
 
 
-
-
     init {
         loadCartData()
     }
+
     fun loadCartData() { // Launch a coroutine to fetch data
         viewModelScope.launch {
             _uiState.value = CartUiState.Loading
@@ -75,8 +81,9 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
                         cartCoffeeList = cartItemList,
                         summary = calculateSummary(cartItemList),
                         paymentMethod = paymentOptions,
-                        selectedPaymentMethod = previous?.selectedPaymentMethod?:paymentOptions.first(),
-                        isPaymentCardExpanded = previous?.isPaymentCardExpanded?: false
+                        selectedPaymentMethod = previous?.selectedPaymentMethod
+                            ?: paymentOptions.first(),
+                        isPaymentCardExpanded = previous?.isPaymentCardExpanded ?: false
                     )
                 }
                 .onFailure { err ->
@@ -85,6 +92,7 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
                 }
         }
     }
+
     fun addToCart(
         coffeeItem: CoffeeItem,
         size: String,
@@ -132,9 +140,11 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
     fun increaseQuantity(itemId: String) {
         changeQuantity(itemId, +1)
     }
+
     fun decreaseQuantity(itemId: String) {
         changeQuantity(itemId, -1)
     }
+
     fun deleteItem(id: String) {
         viewModelScope.launch {
             runCatching {
@@ -148,6 +158,7 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
             }
         }
     }
+
     private fun changeQuantity(itemId: String, delta: Int) {
         viewModelScope.launch {
             runCatching {
@@ -171,6 +182,7 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
             }
         }
     }
+
     private fun calculateSummary(items: List<CartItem>): CartSummary {
         val subtotal = items.sumOf { it.price * it.quantity }
         val deliveryFee = if (items.isNotEmpty()) 1.0 else 0.0
@@ -181,16 +193,42 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
         )
 
 
-
     }
 
-    fun togglePaymentMethod(){
+    fun togglePaymentMethod() {
         val current = _uiState.value as? CartUiState.Success ?: return
         _uiState.value = current.copy(isPaymentCardExpanded = !current.isPaymentCardExpanded)
     }
 
-    fun selectPayment(method: PaymentMethod){
+    fun selectPayment(method: PaymentMethod) {
         val current = _uiState.value as? CartUiState.Success ?: return
         _uiState.value = current.copy(isPaymentCardExpanded = false, selectedPaymentMethod = method)
+    }
+
+
+    private val _orderConfSheet = MutableStateFlow<OrderConfirmType?>(null)
+    val orderConfSheet = _orderConfSheet.asStateFlow()
+
+    private val _orderConfUiState = MutableStateFlow<AccountUiState>(AccountUiState.Loading)
+    val orderConfUiState = _orderConfUiState.asStateFlow()
+
+    fun showOrderConfSheet(type: OrderConfirmType?) {
+        _orderConfSheet.value = type
+    }
+
+    fun placeOrder(state: CartUiState.Success) {
+        showOrderConfSheet(OrderConfirmType.OrderConfirm)
+    }
+
+    fun confirmOrder() {
+        viewModelScope.launch {
+            runCatching {
+                // Here you would normally send the order to a server
+                cartRepository.clearCart()
+            }.onSuccess {
+                showOrderConfSheet(null) // Close sheet
+                loadCartData() // Refresh cart (will show EmptyView)
+            }
+        }
     }
 }

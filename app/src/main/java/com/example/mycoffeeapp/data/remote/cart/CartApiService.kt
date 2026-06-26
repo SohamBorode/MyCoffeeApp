@@ -20,4 +20,7 @@ interface CartApiService{
 
     @POST("api/cart/cartItem/update")
     suspend fun updateCartItem(@Body cartItem: CartItemDto)
+
+    @POST("api/cart/clear")
+    suspend fun clearCart()
 }
