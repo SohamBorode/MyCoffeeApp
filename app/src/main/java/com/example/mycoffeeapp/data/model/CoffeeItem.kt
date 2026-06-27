@@ -1,7 +1,5 @@
 package com.example.mycoffeeapp.data.model
 
-import java.time.temporal.TemporalQuery
-
 data class CoffeeItem(
     val id: String,
     val categoryId: String = "1",
@@ -13,6 +11,8 @@ data class CoffeeItem(
     val rating: Double,
     val reviewCount: Int,
     val isFavorite: Boolean = false,
-    val size: String = "M",        // Default size for this item
-    val temperature: String = "Hot" // Default temperature for this ite
+    val size: String = "M",
+    val temperature: String = "Hot",
+    val longDescription: String,
+    val ingredients: List<String>
 )

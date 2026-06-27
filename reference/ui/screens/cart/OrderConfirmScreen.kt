@@ -31,7 +31,6 @@ import com.example.mycoffeeapp.ui.theme.OffWhite
 
 @Composable
 fun OrderConfirmContent(
-    state: CartUiState,
     onConfirmClick : () -> Unit
 ) {
     Column(

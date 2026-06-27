@@ -6,6 +6,7 @@ import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.data.model.Profile
 import com.example.mycoffeeapp.data.model.dto.OrderDto
 import com.example.mycoffeeapp.data.repository.profile.ProfileRepository
+import com.example.mycoffeeapp.ui.screens.cart.CartUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -22,17 +23,20 @@ sealed interface ProfileImageAction {
 }
 
 sealed interface ProfileUiState {
-    data object Loading : ProfileUiState
+    object Loading : ProfileUiState
+
     data class Success(
         val username: String,
         val profileImageUri: String? = null,
         val defaultProfileImage: Int = R.drawable.coffee_5
     ) : ProfileUiState
+
     data class Error(val msg: String) : ProfileUiState
 }
 
 sealed interface AccountUiState {
-    data object Loading : AccountUiState
+    object Loading : AccountUiState
+
     data class Success(
         val username: String,
         val fullName: String,
@@ -45,27 +49,20 @@ sealed interface AccountUiState {
         val isLoggedIn: Boolean,
         val isLoggedOut: Boolean
     ) : AccountUiState
+
     data class Error(val msg: String) : AccountUiState
 }
 
 sealed interface OrdersUiState {
-    data object Loading : OrdersUiState
+    object Loading : OrdersUiState
     data class Success(val orders: List<OrderDto>) : OrdersUiState
     data class Error(val msg: String) : OrdersUiState
 }
 
+
 class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState = _uiState.asStateFlow()
-
-    private val _activeSheet = MutableStateFlow<ProfileSheetType?>(null)
-    val activeSheet = _activeSheet.asStateFlow()
-
-    private val _accountUiState = MutableStateFlow<AccountUiState>(AccountUiState.Loading)
-    val accountUiState = _accountUiState.asStateFlow()
-
-    private val _orderUiState = MutableStateFlow<OrdersUiState>(OrdersUiState.Loading)
-    val orderUiState = _orderUiState.asStateFlow()
 
     init {
         loadProfileData()
@@ -74,12 +71,15 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
     fun loadProfileData() {
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
-            runCatching { profileRepository.getProfileData() }
+            runCatching {
+                profileRepository.getProfileData()
+            }
                 .onSuccess { profileData ->
                     _uiState.value = ProfileUiState.Success(
                         username = profileData.username,
                         profileImageUri = profileData.profileImageUri
                     )
+
                 }
                 .onFailure { err ->
                     _uiState.value = ProfileUiState.Error(
@@ -92,20 +92,28 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
     fun onProfileImageSelected(uri: String?) {
         val current = _uiState.value
         if (current is ProfileUiState.Success) {
-            val updated = current.copy(profileImageUri = uri)
-            _uiState.value = updated
-            saveProfile(updated)
+            _uiState.value = current.copy(profileImageUri = uri)
+            saveProfile(current.copy(profileImageUri = uri))
         }
     }
 
-    fun removeProfileImage() = onProfileImageSelected(null)
+    fun removeProfileImage() {
+        val current = _uiState.value
+        if (current is ProfileUiState.Success) {
+            _uiState.value = current.copy(profileImageUri = null)
+            saveProfile(current.copy(profileImageUri = null))
+        }
+    }
 
     fun handleProfileImageAction(action: ProfileImageAction) {
         when (action) {
             is ProfileImageAction.SetImage -> onProfileImageSelected(action.uri)
             ProfileImageAction.Remove -> removeProfileImage()
-            ProfileImageAction.Camera -> Unit
-            ProfileImageAction.Gallery -> Unit
+            ProfileImageAction.Camera -> {/* camera open action */
+            }
+
+            ProfileImageAction.Gallery -> {/* gallery open action */
+            }
         }
     }
 
@@ -126,21 +134,34 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
         }
     }
 
+
+    // Selectin which sheet to show
+    private val _activeSheet = MutableStateFlow<ProfileSheetType?>(null)
+    val activeSheet = _activeSheet.asStateFlow()
+
+
     fun showBottonSheet(type: ProfileSheetType?) {
         _activeSheet.value = type
-        when (type) {
-            ProfileSheetType.ACCOUNT -> loadAccountDetails()
-            ProfileSheetType.ORDERS -> loadOrders()
-            ProfileSheetType.TERMS -> Unit
-            ProfileSheetType.HELP -> Unit
-            null -> Unit
+        if (type == ProfileSheetType.ACCOUNT) {
+            loadAccountDetails()
         }
     }
+
+    // Bottom Sheet Visibility
+    private val _showAccountSheet = MutableStateFlow(false)
+    val showAccountSheet = _showAccountSheet.asStateFlow()
+
+    // Bottom Sheet Data State
+    private val _accountUiState = MutableStateFlow<AccountUiState>(AccountUiState.Loading)
+    val accountUiState = _accountUiState.asStateFlow()
+
 
     private fun loadAccountDetails() {
         viewModelScope.launch {
             _accountUiState.value = AccountUiState.Loading
-            runCatching { profileRepository.getAccountDetails() }
+            runCatching {
+                profileRepository.getAccountDetails()
+            }
                 .onSuccess { accountDetails ->
                     _accountUiState.value = AccountUiState.Success(
                         username = accountDetails.username,
@@ -160,18 +181,29 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
         }
     }
 
+    private fun loadTermsAndCondition() {
+
+    }
+
+
+    private val _orderUiState = MutableStateFlow<OrdersUiState>(OrdersUiState.Loading)
+    val oderUiState = _orderUiState.asStateFlow()
+
     private fun loadOrders() {
         viewModelScope.launch {
             _orderUiState.value = OrdersUiState.Loading
-            runCatching { profileRepository.getOrders() }
-                .onSuccess { orders ->
-                    _orderUiState.value = OrdersUiState.Success(orders)
-                }
-                .onFailure { err ->
-                    _orderUiState.value = OrdersUiState.Error(
-                        err.localizedMessage ?: "Failed to load orders"
-                    )
-                }
+            runCatching {
+                profileRepository.getOrders()
+            }.onSuccess { orders ->
+                _orderUiState.value = OrdersUiState.Success(orders)
+            }.onFailure { err ->
+                _orderUiState.value =
+                    OrdersUiState.Error(err.localizedMessage ?: "Failed to load orders")
+            }
         }
     }
+
+    private fun loadHelp() {}
+
+
 }

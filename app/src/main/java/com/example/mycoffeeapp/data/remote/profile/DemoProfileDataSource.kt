@@ -37,7 +37,7 @@ class DemoProfileDataSource @Inject constructor(
         editor.putString("profile_image_path", profile.profileImageUri).apply()
     }
 
-    override suspend fun getAccountDetails() : AccountDto{
+    override suspend fun getAccountDetails(): AccountDto {
         return AccountDto(
             username = profile.username,
             fullName = "Soham Nilesh Borode",
@@ -48,6 +48,19 @@ class DemoProfileDataSource @Inject constructor(
     }
 
     override suspend fun getOrders(): List<OrderDto> {
-        TODO("Not yet implemented")
+        return listOf(
+            OrderDto(
+                orderId = "ORD-1001",
+                date = "2026-06-20",
+                totalAmount = 560.0,
+                status = "Delivered"
+            ),
+            OrderDto(
+                orderId = "ORD-1002",
+                date = "2026-06-24",
+                totalAmount = 250.0,
+                status = "Preparing"
+            )
+        )
     }
 }

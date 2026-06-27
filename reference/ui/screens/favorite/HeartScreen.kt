@@ -46,7 +46,7 @@ fun HeartScreen(
                 )
             )
         },
-        bottomBar = { NavBarDesign(navController, NavBarRoutes.HeartScreen) },
+        bottomBar = { NavBarDesign(navController, "HeartScreen") },
         containerColor = Color(0xFF0C0F14)
     ) { innerPadding ->
         Box(

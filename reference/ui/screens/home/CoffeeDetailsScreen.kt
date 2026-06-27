@@ -3,35 +3,16 @@ package com.example.mycoffeeapp.ui.screens.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,31 +31,26 @@ import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
 import com.example.mycoffeeapp.ui.theme.CafeTextGray
 
+// Enum for Coffee Size with price multipliers
 enum class CoffeeSize(val priceMultiplier: Double) {
     S(0.8),
     M(1.0),
     L(1.2)
 }
 
+// Enum for Coffee Temperature with price adjustments
 enum class CoffeeTemperature(val priceAdjustment: Double) {
     Hot(0.0),
     Ice(0.5)
 }
 
-private fun parseSize(value: String): CoffeeSize {
-    return CoffeeSize.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: CoffeeSize.M
-}
-
-private fun parseTemperature(value: String): CoffeeTemperature {
-    return CoffeeTemperature.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: CoffeeTemperature.Hot
-}
-
 data class CoffeeDetailState(
     val coffeeItem: CoffeeItem,
-    val selectedSize: CoffeeSize = parseSize(coffeeItem.size),
-    val selectedTemperature: CoffeeTemperature = parseTemperature(coffeeItem.temperature),
+    val selectedSize: CoffeeSize = CoffeeSize.valueOf(coffeeItem.size),
+    val selectedTemperature: CoffeeTemperature = CoffeeTemperature.valueOf(coffeeItem.temperature),
     val quantity: Int = 1
 ) {
+    // Logic to calculate price based on size and temperature
     fun calculatePrice(): Double {
         val basePrice = coffeeItem.price
         return (basePrice * selectedSize.priceMultiplier + selectedTemperature.priceAdjustment) * quantity
@@ -91,11 +67,10 @@ fun CoffeeDetailsScreen(
     var state by remember { mutableStateOf(initialState) }
 
     Scaffold(
-        containerColor = CafeCream,
+        containerColor = CafeCream, // Using theme color
         bottomBar = {
             BottomBuyBar(
                 price = state.calculatePrice(),
-                currencySymbol = state.coffeeItem.currencySymbol,
                 onAddToCartClick = {
                     onAddToCartEndpoint(
                         state.coffeeItem.id,
@@ -122,6 +97,7 @@ fun CoffeeDetailsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Large Coffee Image
             AsyncImage(
                 model = state.coffeeItem.imageUrl,
                 contentDescription = state.coffeeItem.name,
@@ -134,6 +110,7 @@ fun CoffeeDetailsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Title and Temperature Selection
             Text(
                 text = state.coffeeItem.name,
                 fontSize = 24.sp,
@@ -161,7 +138,7 @@ fun CoffeeDetailsScreen(
                         modifier = Modifier.clickable { state = state.copy(selectedTemperature = CoffeeTemperature.Hot) }
                     )
                 }
-
+                // Coffee bean icon
                 Icon(
                     painter = painterResource(id = R.drawable.default_bean),
                     contentDescription = null,
@@ -174,6 +151,7 @@ fun CoffeeDetailsScreen(
             HorizontalDivider(color = Color(0xFFEAEAEA), thickness = 1.dp)
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Description Section
             Text(
                 text = "Description",
                 fontWeight = FontWeight.Bold,
@@ -188,44 +166,9 @@ fun CoffeeDetailsScreen(
                 lineHeight = 22.sp
             )
 
-            if (state.coffeeItem.longDescription.isNotBlank()) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    text = "About",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = CafeTextDark
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = state.coffeeItem.longDescription,
-                    fontSize = 14.sp,
-                    color = CafeTextGray,
-                    lineHeight = 22.sp
-                )
-            }
-
-            if (state.coffeeItem.ingredients.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    text = "Ingredients",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = CafeTextDark
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                state.coffeeItem.ingredients.forEach { ingredient ->
-                    Text(
-                        text = "• $ingredient",
-                        fontSize = 14.sp,
-                        color = CafeTextGray,
-                        lineHeight = 22.sp
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Size Selection Section
             Text(
                 text = "Size",
                 fontWeight = FontWeight.Bold,
@@ -303,7 +246,7 @@ fun SizeOption(size: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun BottomBuyBar(price: Double, currencySymbol: String, onAddToCartClick: () -> Unit) {
+fun BottomBuyBar(price: Double, onAddToCartClick: () -> Unit) {
     Surface(
         shadowElevation = 16.dp,
         modifier = Modifier.fillMaxWidth(),
@@ -319,7 +262,7 @@ fun BottomBuyBar(price: Double, currencySymbol: String, onAddToCartClick: () -> 
             Column {
                 Text("Price", color = CafeTextGray, fontSize = 14.sp)
                 Text(
-                    text = "$currencySymbol ${String.format("%.2f", price)}",
+                    text = "$ ${String.format("%.2f", price)}",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = CafeBrown

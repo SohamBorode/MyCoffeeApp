@@ -38,7 +38,6 @@ import com.example.mycoffeeapp.ui.components.ReusableFilterBar
 import com.example.mycoffeeapp.ui.components.SearchBar
 import com.example.mycoffeeapp.ui.components.fadingEdges
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
-import com.example.mycoffeeapp.ui.navigation.NavBarRoutes
 import com.example.mycoffeeapp.ui.screens.favorite.FavoriteViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -70,7 +69,7 @@ fun HomeScreen(
     val state by homeViewModel.uiState.collectAsState()
 
     Scaffold(
-        bottomBar = { NavBarDesign(navController, NavBarRoutes.HomeScreen, cartCount) }
+        bottomBar = { NavBarDesign(navController, "HomeScreen", cartCount) }
     ) { innerPadding ->
         Box(
             modifier = Modifier

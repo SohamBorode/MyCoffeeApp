@@ -5,6 +5,26 @@ import com.example.mycoffeeapp.data.model.dto.CoffeeItemDto
 
 fun CoffeeItemDto.toDomainModel(isFavorite: Boolean = false): CoffeeItem {
     return CoffeeItem(
+        id = id,
+        categoryId = categoryId,
+        name = name,
+        description = description,
+        longDescription = longDescription.orEmpty(),
+        ingredients = ingredients,
+        price = price,
+        imageUrl = imageUrl,
+        rating = rating,
+        reviewCount = reviewCount,
+        isFavorite = isFavorite
+    )
+}
+
+
+
+
+/*
+fun CoffeeItemDto.toDomainModel(isFavorite: Boolean = false): CoffeeItem {
+    return CoffeeItem(
         id = this.id,
         categoryId = this.categoryId,
         name = this.name,
@@ -15,4 +35,4 @@ fun CoffeeItemDto.toDomainModel(isFavorite: Boolean = false): CoffeeItem {
         reviewCount = this.reviewCount,
         isFavorite = isFavorite
     )
-}
+}*/

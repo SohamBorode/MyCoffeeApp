@@ -217,9 +217,7 @@ class CartViewModel(private val cartRepository: CartRepository) : ViewModel() {
     }
 
     fun placeOrder(state: CartUiState.Success) {
-        if (state.cartCoffeeList.isNotEmpty()) {
-            showOrderConfSheet(OrderConfirmType.OrderConfirm)
-        }
+        showOrderConfSheet(OrderConfirmType.OrderConfirm)
     }
 
     fun confirmOrder() {

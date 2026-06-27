@@ -1,9 +1,7 @@
 package com.example.mycoffeeapp.ui.screens.profile
 
-import android.Manifest
-import android.content.pm.PackageManager
+
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,12 +30,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -62,46 +55,51 @@ import coil.compose.AsyncImage
 import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
 import com.example.mycoffeeapp.ui.navigation.NavBarRoutes
-import com.example.mycoffeeapp.ui.navigation.NavRoutes
-import com.example.mycoffeeapp.ui.screens.loginsignp.AuthViewModel
 import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
 import com.example.mycoffeeapp.ui.theme.CafeTextGray
 import com.example.mycoffeeapp.ui.theme.OffWhite
 import com.example.mycoffeeapp.ui.theme.PureWhite
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
     viewModel: ProfileViewModel,
-    authViewModel: AuthViewModel,
-    onLogoutSuccess: () -> Unit
+    authViewModel: Any
 ) {
     val state by viewModel.uiState.collectAsState()
-    val activeSheet by viewModel.activeSheet.collectAsState()
-    val accountState by viewModel.accountUiState.collectAsState()
-    val orderState by viewModel.orderUiState.collectAsState()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     var showImageMenu by remember { mutableStateOf(false) }
 
+    val activeSheet by viewModel.activeSheet.collectAsState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
+    val accountState by viewModel.accountUiState.collectAsState()
+
+    /// camera
     val context = LocalContext.current
 
+    // Add the permission launcher
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) navController.navigate(NavBarRoutes.CameraPreview)
-    }
-
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        viewModel.onProfileImageSelected(uri?.toString())
+        if (isGranted) {
+            // Navigate to camera if permission is granted after request
+            navController.navigate(NavBarRoutes.CameraPreview)
+        } else {
+            // Optionally handle permission denial (e.g., show a Toast)
+        }
     }
 
     Scaffold(
         containerColor = CafeCream,
-        bottomBar = { NavBarDesign(navController, NavBarRoutes.ProfileScreen) }
+        bottomBar = { NavBarDesign(navController, "ProfileScreen") }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -112,6 +110,7 @@ fun ProfileScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Circular Back Button
             IconButton(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier
@@ -129,9 +128,20 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(text = "My", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = CafeTextDark)
+            // Title Section
+            Text(
+                text = "My",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = CafeTextDark
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Profile", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = CafeTextDark)
+                Text(
+                    text = "Profile",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = CafeTextDark
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     painter = painterResource(R.drawable.outline_account_circle_24),
@@ -143,6 +153,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+
             when (val profileState = state) {
                 is ProfileUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -152,15 +163,22 @@ fun ProfileScreen(
 
                 is ProfileUiState.Error -> {
                     Text(
-                        text = profileState.msg,
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        text = (state as ProfileUiState.Error).msg,
+                        modifier = Modifier.align(alignment = Alignment.CenterHorizontally),
                         color = CafeTextDark
                     )
                 }
 
                 is ProfileUiState.Success -> {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Box(contentAlignment = Alignment.BottomEnd) {
+                    // Profile Image Section
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.BottomEnd
+                        ) {
+                            // Main Profile Image with shadow and border to soften the edges
                             AsyncImage(
                                 model = profileState.profileImageUri,
                                 contentDescription = "Profile Picture",
@@ -170,17 +188,21 @@ fun ProfileScreen(
                                     .size(130.dp)
                                     .shadow(elevation = 6.dp, shape = CircleShape)
                                     .border(4.dp, PureWhite, CircleShape)
-                                    .clip(CircleShape),
+                                    .clip(CircleShape)
+                                    .clickable {/*On click the image opens the image window*/ },
                                 contentScale = ContentScale.Crop
                             )
 
+                            // Camera Action Icon as a Badge
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
                                     .background(PureWhite, CircleShape)
                                     .border(1.dp, Color.LightGray.copy(alpha = 0.4f), CircleShape)
                                     .clip(CircleShape)
-                                    .clickable { showImageMenu = true },
+                                    .clickable {
+                                        showImageMenu = true
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -191,20 +213,26 @@ fun ProfileScreen(
                                 )
                                 DropdownMenu(
                                     expanded = showImageMenu,
-                                    onDismissRequest = { showImageMenu = false },
-                                    modifier = Modifier.background(color = OffWhite)
+                                    onDismissRequest = {
+                                        showImageMenu = false
+                                    },
+                                    Modifier.background(color = OffWhite)
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Camera") },
                                         onClick = {
                                             showImageMenu = false
-                                            val permissionCheckResult = ContextCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.CAMERA
-                                            )
+                                            val permissionCheckResult =
+                                                ContextCompat.checkSelfPermission(
+                                                    context,
+                                                    Manifest.permission.CAMERA
+                                                )
+
                                             if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                                                // Already have permission, navigate immediately
                                                 navController.navigate(NavBarRoutes.CameraPreview)
                                             } else {
+                                                // Request permission
                                                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                                             }
                                         }
@@ -213,9 +241,7 @@ fun ProfileScreen(
                                         text = { Text("Gallery") },
                                         onClick = {
                                             showImageMenu = false
-                                            galleryLauncher.launch(
-                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                            )
+                                            // launch gallery
                                         }
                                     )
                                     DropdownMenuItem(
@@ -229,9 +255,49 @@ fun ProfileScreen(
                             }
                         }
                     }
+                    /*Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // Camera Action Icon
+                            Box(
+                                modifier = Modifier
+                                    .size(45.dp)
+                                    .border(1.dp, CafeTextDark, CircleShape)
+                                    .clip(CircleShape)
+                                    .clickable { /* End Point: Image Picker */ },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.photo_camera_icon),
+                                    contentDescription = "Change Picture",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = CafeTextDark
+                                )
+                            }
 
+                            Spacer(modifier = Modifier.width(20.dp))
+
+                            // Main Profile Image
+                            Image(
+                                painter = painterResource(profileState.profileImg),
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+*/
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Username
                     Text(
                         text = profileState.username,
                         fontSize = 22.sp,
@@ -240,28 +306,29 @@ fun ProfileScreen(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(40.dp))
 
-                    ProfileMenuItem("My Account") { viewModel.showBottonSheet(ProfileSheetType.ACCOUNT) }
-                    ProfileMenuItem("Orders") { viewModel.showBottonSheet(ProfileSheetType.ORDERS) }
-                    ProfileMenuItem("Terms and Conditions") { viewModel.showBottonSheet(ProfileSheetType.TERMS) }
-                    ProfileMenuItem("Help Center") { viewModel.showBottonSheet(ProfileSheetType.HELP) }
-
-                    Button(
-                        onClick = {
-                            authViewModel.logout()
-                            onLogoutSuccess()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp)
-                    ) {
-                        Text("Logout")
-                    }
+                    // Menu Options (End Points for Navigation)
+                    ProfileMenuItem(
+                        title = "My Account",
+                        onClick = { viewModel.showBottonSheet(ProfileSheetType.ACCOUNT) })
+                    ProfileMenuItem(title = "Orders", onClick = {
+                        viewModel.showBottonSheet(
+                            ProfileSheetType.ORDERS
+                        )
+                    })
+                    ProfileMenuItem(
+                        title = "Terms and Conditions",
+                        onClick = { viewModel.showBottonSheet(ProfileSheetType.TERMS) })
+                    ProfileMenuItem(
+                        title = "Help Center",
+                        onClick = { viewModel.showBottonSheet(ProfileSheetType.HELP) })
 
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
+
+
         }
     }
 
@@ -272,13 +339,13 @@ fun ProfileScreen(
             containerColor = CafeCream,
             dragHandle = { BottomSheetDefaults.DragHandle() }
         ) {
-            when (activeSheet) {
-                ProfileSheetType.ACCOUNT -> AccountSheetContent(accountState)
-                ProfileSheetType.ORDERS -> OrdersSheetContent(orderState)
-                ProfileSheetType.TERMS -> TermsSheetContent()
-                ProfileSheetType.HELP -> HelpCenterSheetContent()
-                null -> Unit
-            }
+           when(activeSheet){
+               ProfileSheetType.ACCOUNT -> AccountSheetContent(accountState)
+               ProfileSheetType.ORDERS -> OrdersSheetContent()
+               ProfileSheetType.TERMS -> TermsSheetContent()
+               ProfileSheetType.HELP -> HelpCenterSheetContent()
+               else -> {}
+           }
         }
     }
 }
@@ -315,3 +382,93 @@ fun ProfileMenuItem(title: String, onClick: () -> Unit) {
         }
     }
 }
+
+/*
+@Composable
+fun ProfileScreen(navController: NavHostController) {
+    Scaffold(
+        containerColor = Color(0xFFF7F1EA),
+        bottomBar = { NavBarDesign(navController, "ProfileScreen") }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxSize(1f / 5f)
+                    .padding(10.dp)
+            ) {
+                IconButton(
+                    onClick = {},
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.regular_outline_arrow_left),
+                        contentDescription = "Back to Home page", modifier = Modifier
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "My",
+                    color = Black,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 35.sp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Profile",
+                        color = Black,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 35.sp
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.outline_account_circle_24),
+                        contentDescription = null,
+                    )
+                }
+                Spacer(modifier = Modifier.height(40.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth().padding(30.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = {}) {
+                            Icon(
+                                painter = painterResource(R.drawable.regular_outline_bag),
+                                contentDescription = "Camera icon to change profile picture"
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(30.dp))
+                        Image(
+                            painter = painterResource(R.drawable.coffee_1),
+                            contentDescription = "Profile image",
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(shape = CircleShape)
+                                .border(border =  BorderStroke(2.dp, color = Color.Transparent))
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "Username",
+                        color = Black,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 30.sp
+                    )
+
+                }
+
+            }
+
+        }
+    }
+}
+*/

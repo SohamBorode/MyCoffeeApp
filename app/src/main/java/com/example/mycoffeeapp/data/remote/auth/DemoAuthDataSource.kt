@@ -30,9 +30,18 @@ class DemoAuthDataSource : AuthDataSource {
     }
 
     override suspend fun login(loginRequest: LoginRequest): AuthSession {
-        val identifier = loginRequest.email ?: loginRequest.username
+//        val identifier = loginRequest.email ?: loginRequest.username
+        val identifier = loginRequest.email?.takeIf { it.isNotBlank() }
+            ?: loginRequest.username?.takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException("Email or username is required")
+
+//        val user = demoUsers.firstOrNull {
+//            (it.email == identifier || it.username == identifier) && it.password == loginRequest.password
+//        } ?: throw IllegalArgumentException("Invalid credentials")
         val user = demoUsers.firstOrNull {
-            (it.email == identifier || it.username == identifier) && it.password == loginRequest.password
+            (it.email?.equals(identifier, ignoreCase = true) == true ||
+                    it.username?.equals(identifier, ignoreCase = true) == true) &&
+                    it.password == loginRequest.password
         } ?: throw IllegalArgumentException("Invalid credentials")
 
         currentUserid = user.id
@@ -42,9 +51,30 @@ class DemoAuthDataSource : AuthDataSource {
     }
 
     override suspend fun signup(signupRequest: SignupRequest): AuthSession {
-        if (demoUsers.any { (it.email == signupRequest.email || it.username == signupRequest.username) && it.password == signupRequest.password }) {
-            throw IllegalArgumentException("User Already exits, login or try to create new account")
+
+        val emailExists = signupRequest.email?.let { email ->
+            demoUsers.any { it.email?.equals(email, ignoreCase = true) == true }
+        } ?: false
+
+        val usernameExists = signupRequest.username?.let { username ->
+            demoUsers.any {
+                it.username?.equals(
+                    username,
+                    ignoreCase = true
+                ) == true
+            }
+        } ?: false
+        if (emailExists || usernameExists) {
+            throw IllegalArgumentException("User already exists, login or try another account")
         }
+
+
+//    if (demoUsers.any
+//    { (it.email == signupRequest.email || it.username == signupRequest.username) && it.password == signupRequest.password })
+//    {
+//        throw IllegalArgumentException("User Already exits, login or try to create new account")
+//    }
+
         val user = DemoUser(
             id = UUID.randomUUID().toString(),
             name = signupRequest.name,
@@ -58,12 +88,12 @@ class DemoAuthDataSource : AuthDataSource {
     }
 
     override suspend fun getCurrentUser(): AppUser {
-        return demoUsers.firstOrNull { it.id == currentUserid }?.toAppUser() 
+        return demoUsers.firstOrNull { it.id == currentUserid }?.toAppUser()
             ?: throw IllegalStateException("No user currently logged in")
     }
 
     override suspend fun logout() {
-        TODO("Not yet implemented")
+        currentUserid = null
     }
 
 }

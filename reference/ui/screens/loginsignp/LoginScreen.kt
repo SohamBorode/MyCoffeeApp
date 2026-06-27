@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +32,10 @@ import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
 import com.example.mycoffeeapp.ui.theme.DarkMocha
 import com.example.mycoffeeapp.ui.theme.LightGray
+import com.example.mycoffeeapp.ui.theme.OffWhite
+import com.example.mycoffeeapp.ui.theme.PureWhite
+import com.example.mycoffeeapp.ui2.screens.loginsignp.AuthUiState
+import com.example.mycoffeeapp.ui2.screens.loginsignp.AuthViewModel
 
 @Composable
 //@Preview(showSystemUi = true)

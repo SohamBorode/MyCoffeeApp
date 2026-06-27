@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -24,9 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.mycoffeeapp.ui.navigation.NavRoutes
+import com.example.mycoffeeapp.ui2.screens.loginsignp.AuthUiState
+import com.example.mycoffeeapp.ui2.screens.loginsignp.AuthViewModel
 
 @Composable
-fun SignupScreen(navControllerX: NavHostController, authViewModel: com.example.mycoffeeapp.ui.screens.loginsignp.AuthViewModel) {
+fun SignupScreen(navControllerX: NavHostController, authViewModel: AuthViewModel) {
 
     // State management for user input
     var email by rememberSaveable { mutableStateOf("") }
@@ -46,7 +49,7 @@ fun SignupScreen(navControllerX: NavHostController, authViewModel: com.example.m
     // Handles side-effects based on state changes
     LaunchedEffect(state) {
         when (state) {
-            is com.example.mycoffeeapp.ui.screens.loginsignp.AuthUiState.Success -> {
+            is AuthUiState.Success -> {
                 // Reset state before navigating so LoginScreen doesn't auto-navigate
                 authViewModel.loadAuthpage() 
                 navControllerX.navigate(NavRoutes.LoginScreen) {
@@ -54,9 +57,9 @@ fun SignupScreen(navControllerX: NavHostController, authViewModel: com.example.m
                 }
             }
 
-            is com.example.mycoffeeapp.ui.screens.loginsignp.AuthUiState.Error -> Toast.makeText(
+            is AuthUiState.Error -> Toast.makeText(
                 context,
-                (state as com.example.mycoffeeapp.ui.screens.loginsignp.AuthUiState.Error).msg,
+                (state as AuthUiState.Error).msg,
                 Toast.LENGTH_SHORT
             ).show()
 
@@ -116,9 +119,9 @@ fun SignupScreen(navControllerX: NavHostController, authViewModel: com.example.m
                 )
             },
             //  Button is enabled as long as we are NOT loading
-            enabled = state != _root_ide_package_.com.example.mycoffeeapp.ui.screens.loginsignp.AuthUiState.Loading
+            enabled = state != AuthUiState.Loading
         ) {
-            Text(text = if (state is com.example.mycoffeeapp.ui.screens.loginsignp.AuthUiState.Loading) "Creating Account..." else "Create Account")
+            Text(text = if (state is AuthUiState.Loading) "Creating Account..." else "Create Account")
         }
 
         Spacer(modifier = Modifier.height(8.dp))

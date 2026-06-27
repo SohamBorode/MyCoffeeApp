@@ -55,14 +55,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.data.model.cart.CartItem
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
-import com.example.mycoffeeapp.ui.navigation.NavBarRoutes
 import com.example.mycoffeeapp.ui.theme.CafeBrown
 import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark
@@ -78,21 +79,23 @@ import java.util.Locale
 fun CartScreen(
     onBackClick: () -> Unit,
     navController: NavHostController,
-    viewModel: CartViewModel,
+    viewModel: CartViewModel = viewModel(),
     cartCount: Int
 ) {
     val cartState by viewModel.uiState.collectAsState()
+
     val orderConfSheet by viewModel.orderConfSheet.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
+
     Scaffold(
         containerColor = Color(0xFFF7F1EA),
-        bottomBar = { NavBarDesign(navController, NavBarRoutes.CartScreen, cartCount) },
+        bottomBar = { NavBarDesign(navController, "CartScreen", cartCount) },
         topBar = {
             CartHeaderSection(
                 title = "Order",
                 onBackClick = onBackClick,
-                onFavoriteClick = {}
+                onFavoriteClick = { }
             )
         }
     ) { innerPadding ->
@@ -102,12 +105,18 @@ fun CartScreen(
                 .padding(innerPadding)
         ) {
             when (val state = cartState) {
-                is CartUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                is CartUiState.Error -> Text(
-                    text = state.msg,
-                    modifier = Modifier.align(Alignment.Center),
-                    color = CafeTextDark
-                )
+                is CartUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is CartUiState.Error -> {
+                    Text(
+                        text = state.msg,
+                        modifier = Modifier.align(Alignment.Center),
+                        color = CafeTextDark
+                    )
+                }
+
                 is CartUiState.Success -> {
                     if (state.cartCoffeeList.isEmpty()) {
                         EmptyCartView()
@@ -149,9 +158,15 @@ fun CartScreen(
                                     paymentMethods = state.paymentMethod,
                                     selectedPaymentMethod = state.selectedPaymentMethod,
                                     expand = state.isPaymentCardExpanded,
-                                    onExpandClick = { viewModel.togglePaymentMethod() },
-                                    onPaymentSelected = { viewModel.selectPayment(it) },
-                                    onPlaceOrderClick = { viewModel.placeOrder(state) }
+                                    onExpandClick = {
+                                        viewModel.togglePaymentMethod()
+                                    },
+                                    onPaymentSelected = {
+                                        viewModel.selectPayment(it)
+                                    },
+                                    onPlaceOrderClick = {
+                                        viewModel.placeOrder(state)
+                                    }
                                 )
                             }
                         }
@@ -161,27 +176,22 @@ fun CartScreen(
         }
     }
 
-    if (orderConfSheet != null) {
+
+    if (orderConfSheet!=null) {
         ModalBottomSheet(
             onDismissRequest = { viewModel.showOrderConfSheet(null) },
             sheetState = sheetState,
             containerColor = CafeCream,
             dragHandle = { BottomSheetDefaults.DragHandle() }
         ) {
-            when (orderConfSheet) {
-                OrderConfirmType.OrderConfirm -> {
-                    val successState = cartState as? CartUiState.Success
-                    if (successState != null) {
-                        OrderConfirmContent(
-                            state = successState,
-                            onConfirmClick = { viewModel.confirmOrder() }
-                        )
-                    }
-                }
-                null -> Unit
+            when(orderConfSheet){
+                OrderConfirmType.OrderConfirm -> OrderConfirmContent(onConfirmClick = { viewModel.confirmOrder() })
+                else -> {}
             }
         }
     }
+
+
 }
 
 @Composable
@@ -257,7 +267,9 @@ fun CartCoffeeItem(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = item.name,
                     color = CafeTextDark,
@@ -323,7 +335,10 @@ private fun StepButton(text: String, onClick: () -> Unit) {
         modifier = Modifier.size(28.dp),
         onClick = onClick
     ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
             Text(
                 text = text,
                 color = CafeBrown,
@@ -346,6 +361,8 @@ fun PaymentSummaryCard(
     onPaymentSelected: (PaymentMethod) -> Unit,
     onPlaceOrderClick: () -> Unit
 ) {
+
+
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFE7E1DB)),
@@ -366,6 +383,7 @@ fun PaymentSummaryCard(
             SummaryRow(label = "Price", value = money(subtotal))
             SummaryRow(label = "Delivery Fee", value = money(deliveryFee))
 
+            // payment option card and selection
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFDCD6D0)),
@@ -402,8 +420,9 @@ fun PaymentSummaryCard(
                         modifier = Modifier
                             .size(25.dp)
                             .clip(shape = RoundedCornerShape(50.dp))
-                            .background(color = Gray)
-                    ) {
+                            .background(color = Gray),
+
+                        ) {
                         Icon(
                             painter = painterResource(R.drawable.regular_outline_arrow_down),
                             contentDescription = "Expand payment methods",
@@ -414,15 +433,32 @@ fun PaymentSummaryCard(
                 }
                 AnimatedVisibility(
                     visible = expand,
-                    enter = expandVertically(animationSpec = tween(250)) + fadeIn(animationSpec = tween(250)) + slideInVertically(animationSpec = tween(250), initialOffsetY = { it / 2 }),
-                    exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(150)) + slideOutVertically(animationSpec = tween(200), targetOffsetY = { it / 2 })
+                    enter = expandVertically(animationSpec = tween(250)) + fadeIn(
+                        animationSpec = tween(
+                            250
+                        )
+                    ) + slideInVertically(
+                        animationSpec = tween(250),
+                        initialOffsetY = { it / 2 }),
+                    exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(
+                        animationSpec = tween(
+                            150
+                        )
+                    ) + slideOutVertically(
+                        animationSpec = tween(
+                            200
+                        ), targetOffsetY = { it / 2 }),
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         paymentMethods.forEachIndexed { index, method ->
-                            if (index != 0) HorizontalDivider(color = LightGray, thickness = 1.dp)
+                            if (index != 0) {
+                                HorizontalDivider(
+                                    color = LightGray, thickness = 1.dp
+                                )
+                            }
                             PaymentOptionRow(
                                 method = method,
                                 selected = (method.id == selectedPaymentMethod.id),
@@ -454,6 +490,7 @@ fun PaymentSummaryCard(
     }
 }
 
+
 @Composable
 fun PaymentOptionRow(selected: Boolean, method: PaymentMethod, onClick: () -> Unit) {
     Row(
@@ -467,6 +504,7 @@ fun PaymentOptionRow(selected: Boolean, method: PaymentMethod, onClick: () -> Un
         Icon(
             painter = painterResource(method.iconRes),
             contentDescription = method.title,
+//            tint = CafeBrown,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(10.dp))
@@ -481,7 +519,7 @@ fun PaymentOptionRow(selected: Boolean, method: PaymentMethod, onClick: () -> Un
             selected = selected,
             onClick = onClick,
             colors = RadioButtonDefaults.colors(
-                selectedColor = CafeBrown,
+                selectedColor =  CafeBrown,
                 unselectedColor = CafeTextGray
             )
         )
@@ -489,13 +527,25 @@ fun PaymentOptionRow(selected: Boolean, method: PaymentMethod, onClick: () -> Un
 }
 
 @Composable
-private fun SummaryRow(label: String, value: String) {
+private fun SummaryRow(
+    label: String,
+    value: String
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, color = CafeTextDark, fontSize = 14.sp)
-        Text(text = value, color = CafeTextDark, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(
+            text = label,
+            color = CafeTextDark,
+            fontSize = 14.sp
+        )
+        Text(
+            text = value,
+            color = CafeTextDark,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -525,5 +575,21 @@ private fun EmptyCartView() {
 }
 
 private fun money(value: Double): String {
-    return NumberFormat.getCurrencyInstance(Locale("en", "IN")).format(value)
+    return NumberFormat.getCurrencyInstance(Locale.US).format(value)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewPaymentCard() {
+    PaymentSummaryCard(
+        subtotal = 12.50,
+        deliveryFee = 1.00,
+        total = 13.50,
+        selectedPaymentMethod = TODO(),
+        paymentMethods = TODO(),
+        expand = TODO(),
+        onExpandClick = TODO(),
+        onPaymentSelected = TODO(),
+        onPlaceOrderClick = {},
+    )
 }
