@@ -70,7 +70,7 @@ fun WelcomeScreen(navController: NavHostController) {
             Button(
                 onClick = {
                     navController.navigate(NavRoutes.LoginScreen) {
-                        popUpTo(NavRoutes.WelcomeScreen) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 modifier = Modifier

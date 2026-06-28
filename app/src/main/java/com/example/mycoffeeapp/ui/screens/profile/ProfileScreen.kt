@@ -62,7 +62,6 @@ import coil.compose.AsyncImage
 import com.example.mycoffeeapp.R
 import com.example.mycoffeeapp.ui.navigation.NavBarDesign
 import com.example.mycoffeeapp.ui.navigation.NavBarRoutes
-import com.example.mycoffeeapp.ui.navigation.NavRoutes
 import com.example.mycoffeeapp.ui.screens.loginsignp.AuthViewModel
 import com.example.mycoffeeapp.ui.theme.CafeCream
 import com.example.mycoffeeapp.ui.theme.CafeTextDark

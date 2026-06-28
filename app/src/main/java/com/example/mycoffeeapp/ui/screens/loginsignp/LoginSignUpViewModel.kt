@@ -91,13 +91,13 @@ class AuthViewModel(
     }
 
     fun logout() {
+        sessionManager.logout()
+        _uiState.value = AuthUiState.Idel
+
         viewModelScope.launch {
             runCatching {
                 authRepository.logout()
             }
-            sessionManager.logout()
-            _uiState.value =
-                AuthUiState.Idel
         }
     }
 

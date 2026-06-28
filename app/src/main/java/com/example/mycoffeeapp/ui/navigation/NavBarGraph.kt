@@ -48,13 +48,6 @@ fun NavBarGraph(rootNavController: NavHostController, authViewModel: AuthViewMod
         ?: 0
 
     val profileViewModel = remember { ProfileViewModel(ServiceLocator.profileRepository) }
-    val authViewModel = remember {
-        AuthViewModel(
-            authRepository = ServiceLocator.authRepository,
-            sessionManager = ServiceLocator.sessionManager
-        )
-    }
-
     NavHost(
         navController = navBarController,
         startDestination = NavBarRoutes.HomeScreen,
@@ -110,12 +103,12 @@ fun NavBarGraph(rootNavController: NavHostController, authViewModel: AuthViewMod
                 viewModel = profileViewModel,
                 authViewModel = authViewModel,
                 onLogoutSuccess = {
-                    rootNavController.navigate(NavRoutes.WelcomeScreen)
-//                    {
-//                        popUpTo(NavRoutes.NavBarGraph) {
-//                            inclusive = true
-//                        }
-//                    }
+                    rootNavController.navigate(NavRoutes.WelcomeScreen) {
+                        popUpTo(NavRoutes.NavBarGraph) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }

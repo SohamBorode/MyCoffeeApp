@@ -47,10 +47,11 @@ fun SignupScreen(navControllerX: NavHostController, authViewModel: com.example.m
     LaunchedEffect(state) {
         when (state) {
             is com.example.mycoffeeapp.ui.screens.loginsignp.AuthUiState.Success -> {
-                // Reset state before navigating so LoginScreen doesn't auto-navigate
-                authViewModel.loadAuthpage() 
-                navControllerX.navigate(NavRoutes.LoginScreen) {
-                    popUpTo(NavRoutes.SignupScreen) { inclusive = true }
+                navControllerX.navigate(NavRoutes.NavBarGraph) {
+                    popUpTo(NavRoutes.WelcomeScreen) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
                 }
             }
 

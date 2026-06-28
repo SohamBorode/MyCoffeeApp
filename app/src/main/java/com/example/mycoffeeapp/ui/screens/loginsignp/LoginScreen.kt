@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.mycoffeeapp.data.local.SessionManager
 import com.example.mycoffeeapp.ui.navigation.NavRoutes
 import com.example.mycoffeeapp.ui.theme.CafeBrown
 import com.example.mycoffeeapp.ui.theme.CafeCream
@@ -41,7 +40,6 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
     // State for the password input field
     var password by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
-    val sessionManager = remember { SessionManager(context) }
     val state : AuthUiState by authViewModel.uiState.collectAsState()
 
     // Reset state when entering to prevent stale states from previous screens
@@ -55,6 +53,7 @@ fun LoginScreen(navControllerX: NavHostController, authViewModel: AuthViewModel)
                 navControllerX.navigate(NavRoutes.NavBarGraph) {
                     // Clear the entire auth flow backstack
                     popUpTo(NavRoutes.WelcomeScreen) { inclusive = true }
+                    launchSingleTop = true
                 }
             }
 
