@@ -14,11 +14,7 @@ class AuthRepository(
 ) {
     suspend fun login(loginRequest: LoginRequest): AuthSession {
         return if (Constants.USE_BACKEND) {
-            try {
                 remoteAuthDataSource.login(loginRequest)
-            } catch (e: Exception) {
-                demoAuthDataSource.login(loginRequest)
-            }
         } else {
             demoAuthDataSource.login(loginRequest)
         }
@@ -26,11 +22,7 @@ class AuthRepository(
 
     suspend fun signup(signupRequest: SignupRequest): AuthSession {
         return if (Constants.USE_BACKEND) {
-            try {
                 remoteAuthDataSource.signup(signupRequest)
-            } catch (e: Exception) {
-                demoAuthDataSource.signup(signupRequest)
-            }
         } else {
             demoAuthDataSource.signup(signupRequest)
         }
@@ -38,11 +30,7 @@ class AuthRepository(
 
     suspend fun getCurrentUser(): AppUser {
         return if (Constants.USE_BACKEND) {
-            try {
                 remoteAuthDataSource.getCurrentUser()
-            } catch (e: Exception) {
-                demoAuthDataSource.getCurrentUser()
-            }
         } else {
             demoAuthDataSource.getCurrentUser()
         }
